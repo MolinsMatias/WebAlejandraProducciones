@@ -725,10 +725,12 @@ footer {
         flex-direction: column;
         text-align: center;
         padding-top: 160px;
+        background-attachment: scroll;
+        background-position: center;
     }
 
     .hero-section::before {
-        background: rgba(5, 5, 5, 0.20); /* Aclarado para móviles */
+        background: rgba(5, 5, 5, 0.60); /* Oscurecimiento mayor para móviles */
     }
 
     .hero-reels {
