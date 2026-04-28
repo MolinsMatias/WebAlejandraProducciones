@@ -149,6 +149,7 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
     lightboxLocation.textContent = ubicacion?.recinto || ubicacion?.comuna || "Ubicación Premium";
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 }
 
 function closeLightbox() {
@@ -156,6 +157,7 @@ function closeLightbox() {
     const oldMedia = lightboxMediaContainer.querySelector('video');
     if (oldMedia) oldMedia.pause();
     document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
 }
 
 if (lightbox) {
