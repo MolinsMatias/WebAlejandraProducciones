@@ -727,6 +727,10 @@ footer {
         padding-top: 160px;
     }
 
+    .hero-section::before {
+        background: rgba(5, 5, 5, 0.20); /* Aclarado para móviles */
+    }
+
     .hero-reels {
         justify-content: center;
         flex-wrap: wrap;

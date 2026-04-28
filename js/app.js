@@ -19,14 +19,14 @@ async function fetchEventos() {
         // Si hay error (por ej. falta de credenciales), caemos al catch.
 
         const querySnapshot = await getDocs(q);
-        
+
         const grids = [
             document.getElementById('bento-grid-led'),
             document.getElementById('bento-grid-ajedrez'),
             document.getElementById('bento-grid-packs'),
             document.getElementById('bento-grid-videos')
         ];
-        grids.forEach(g => { if(g) g.innerHTML = ''; });
+        grids.forEach(g => { if (g) g.innerHTML = ''; });
 
         if (querySnapshot.empty) {
             if (grids[0]) grids[0].innerHTML = '<p>No hay eventos cargados aún.</p>';
@@ -62,7 +62,7 @@ function renderBentoItem(data) {
     item.addEventListener('click', () => openLightbox(data.urlImagen, data.ubicacion, data.tipoArchivo));
 
     let mediaHTML = `<img src="${data.urlImagen}" alt="${data.titulo}" loading="lazy">`;
-    
+
     if (data.tipoArchivo === 'youtube') {
         const getYoutubeId = (url) => {
             const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
@@ -83,9 +83,9 @@ function renderBentoItem(data) {
             <span class="bento-tag">${data.tipoEvento}</span>
         </div>
     `;
-    
+
     let targetId = 'bento-grid-led';
-    
+
     // 1. Usar seccionCatalogo si el Admin App lo provee (Nuevo sistema)
     if (data.seccionCatalogo) {
         if (data.seccionCatalogo === 'Ajedrez') targetId = 'bento-grid-ajedrez';
@@ -104,7 +104,7 @@ function renderBentoItem(data) {
     }
 
     const grid = document.getElementById(targetId);
-    if(grid) grid.appendChild(item);
+    if (grid) grid.appendChild(item);
 }
 
 function renderHeroReel(data) {
@@ -148,12 +148,14 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
 
     lightboxLocation.textContent = ubicacion?.recinto || ubicacion?.comuna || "Ubicación Premium";
     lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
     const oldMedia = lightboxMediaContainer.querySelector('video');
     if (oldMedia) oldMedia.pause();
+    document.body.style.overflow = '';
 }
 
 if (lightbox) {
@@ -179,12 +181,9 @@ if (contactForm) {
         const desc = document.getElementById('descripcion').value;
 
         // Número de teléfono de WhatsApp del producor (Incluir código país, sin +)
-        const phone = "56978798057";
+        const phone = "56988475188";
 
-        const mensaje = `Hola Alejandra Producciones!
-Mi nombre es *${nombre}*.
-Me gustaría cotizar un evento tipo: *${tipoEvento}*.
-Detalles: ${desc}`;
+        const mensaje = `¡Hola Alejandra Producciones! 👋\nMi nombre es *${nombre}*.\nMe gustaría cotizar un evento tipo: *${tipoEvento}* 🎉\n*Detalles: ${desc}* ✨`;
 
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
         window.open(url, '_blank');
@@ -214,16 +213,16 @@ function crearMockData() {
             ubicacion: { recinto: "Club Providencia" }
         }
     ];
-    
+
     const grids = [
         document.getElementById('bento-grid-led'),
         document.getElementById('bento-grid-ajedrez'),
         document.getElementById('bento-grid-packs'),
         document.getElementById('bento-grid-videos')
     ];
-    grids.forEach(g => { if(g) g.innerHTML = ''; });
-    
-    if(heroReelsContainer) heroReelsContainer.innerHTML = '';
+    grids.forEach(g => { if (g) g.innerHTML = ''; });
+
+    if (heroReelsContainer) heroReelsContainer.innerHTML = '';
     mocks.forEach(renderBentoItem);
     renderHeroReel(mocks[1]); // Renderizar el video de test de reels
 }
@@ -240,14 +239,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.abrirCatalogoEn = (targetId) => {
         if (!tabBtns || tabBtns.length === 0) return;
-        
+
         tabBtns.forEach(b => b.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active-content'));
-        
+
         // Encontrar boton que corresponda al target
         const btnActivar = Array.from(tabBtns).find(b => b.getAttribute('data-target') === targetId);
         if (btnActivar) btnActivar.classList.add('active');
-        
+
         const targetGrid = document.getElementById(targetId);
         if (targetGrid) targetGrid.classList.add('active-content');
 
