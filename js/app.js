@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, getDocs, orderBy, query, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, getDoc, doc, orderBy, query, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Elementos del DOM
 const bentoGrid = document.getElementById('bento-grid');
@@ -9,14 +9,45 @@ const lightboxLocation = document.getElementById('lightbox-location');
 const heroReelsContainer = document.getElementById('hero-reels-container');
 const lightboxClose = document.getElementById('lightbox-close');
 
+// Almacén de todos los eventos para filtrado
+let allEventosData = [];
+
+// Tab activo actual
+let activeTabId = 'bento-grid-led';
+
+// Map de seccionCatalogo a gridId
+const seccionToGrid = {
+    'Pistas LED': 'bento-grid-led',
+    'Ajedrez': 'bento-grid-ajedrez',
+    'Packs': 'bento-grid-packs',
+    'Videos': 'bento-grid-videos'
+};
+
+// 0. Cargar URL del catálogo PDF desde Firestore
+async function fetchCatalogoPDF() {
+    try {
+        const docRef = doc(db, "config", "catalogo");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.pdfUrl) {
+                const container = document.getElementById('pdf-download-container');
+                const btn = document.getElementById('btn-download-pdf');
+                if (container && btn) {
+                    btn.href = data.pdfUrl;
+                    container.style.display = 'flex';
+                }
+            }
+        }
+    } catch (error) {
+        console.log("No se pudo cargar el PDF del catálogo:", error.message);
+    }
+}
+
 // 1. Obtener eventos/packs desde Firestore (bento grid)
 async function fetchEventos() {
     try {
         const q = query(collection(db, "eventos"), orderBy("fecha", "desc"), limit(30));
-
-        // Mientras no haya datos reales por credenciales falsas, usaremos un mock fallback 
-        // para asegurar que puedas visualizar el diseño. 
-        // Si hay error (por ej. falta de credenciales), caemos al catch.
 
         const querySnapshot = await getDocs(q);
 
@@ -33,9 +64,11 @@ async function fetchEventos() {
             return;
         }
 
+        allEventosData = [];
         let reelsCargados = 0;
         querySnapshot.forEach((doc) => {
             const data = doc.data();
+            allEventosData.push(data);
             renderBentoItem(data);
 
             // Poblar los 2 primeros reels si son formato video
@@ -46,6 +79,9 @@ async function fetchEventos() {
                 }
             }
         });
+
+        // Poblar los filtros dinámicos del tab activo
+        poblarFiltrosDelTab();
 
     } catch (error) {
         console.error("🔥 Error real de Firebase al leer la base de datos:", error);
@@ -61,6 +97,12 @@ function renderBentoItem(data) {
     const item = document.createElement('div');
     item.className = 'bento-item';
 
+    // Data attributes para filtrado
+    const recinto = data.ubicacion?.recinto || '';
+    const tipoEvento = data.tipoEvento || '';
+    item.setAttribute('data-recinto', recinto);
+    item.setAttribute('data-tipo', tipoEvento);
+
     // Al hacer click, abrir el lightbox
     item.addEventListener('click', () => openLightbox(data.urlImagen, data.ubicacion, data.tipoArchivo));
 
@@ -68,7 +110,7 @@ function renderBentoItem(data) {
 
     if (data.tipoArchivo === 'youtube') {
         const getYoutubeId = (url) => {
-            const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+            const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\\&v=)([^#\\&\\?]*).*/);
             return (match && match[2].length === 11) ? match[2] : null;
         };
         const yId = getYoutubeId(data.urlImagen);
@@ -120,6 +162,109 @@ function renderHeroReel(data) {
     heroReelsContainer.innerHTML += mediaHTML;
 }
 
+// --- Filtros dinámicos ---
+// Poblar filtros solo con los datos del tab activo
+function poblarFiltrosDelTab() {
+    const filterCentro = document.getElementById('filter-centro');
+    const filterTipo = document.getElementById('filter-tipo');
+    if (!filterCentro || !filterTipo) return;
+
+    // Obtener los items del grid activo
+    const activeGrid = document.getElementById(activeTabId);
+    if (!activeGrid) return;
+
+    const items = activeGrid.querySelectorAll('.bento-item');
+
+    // Extraer valores únicos de los items de este tab
+    const centros = new Set();
+    const tipos = new Set();
+
+    items.forEach(item => {
+        const recinto = item.getAttribute('data-recinto');
+        const tipo = item.getAttribute('data-tipo');
+        if (recinto && recinto.trim()) centros.add(recinto.trim());
+        if (tipo && tipo.trim()) tipos.add(tipo.trim());
+    });
+
+    // Guardar valor actual para re-seleccionar si sigue disponible
+    const prevCentro = filterCentro.value;
+    const prevTipo = filterTipo.value;
+
+    // Limpiar y re-poblar
+    filterCentro.innerHTML = '<option value="">Todos los centros</option>';
+    filterTipo.innerHTML = '<option value="">Todos los tipos</option>';
+
+    [...centros].sort().forEach(centro => {
+        const opt = document.createElement('option');
+        opt.value = centro;
+        opt.textContent = centro;
+        filterCentro.appendChild(opt);
+    });
+
+    [...tipos].sort().forEach(tipo => {
+        const opt = document.createElement('option');
+        opt.value = tipo;
+        opt.textContent = tipo;
+        filterTipo.appendChild(opt);
+    });
+
+    // Resetear filtros al cambiar de tab
+    filterCentro.value = '';
+    filterTipo.value = '';
+
+    // Mostrar todos los items del tab (quitar filtro previo)
+    items.forEach(item => { item.style.display = ''; });
+}
+
+function aplicarFiltros() {
+    const filterCentro = document.getElementById('filter-centro');
+    const filterTipo = document.getElementById('filter-tipo');
+    if (!filterCentro || !filterTipo) return;
+
+    const centroSeleccionado = filterCentro.value;
+    const tipoSeleccionado = filterTipo.value;
+
+    // Filtrar solo los bento-items del tab activo
+    const activeGrid = document.getElementById(activeTabId);
+    if (!activeGrid) return;
+
+    const items = activeGrid.querySelectorAll('.bento-item');
+    items.forEach(item => {
+        const recinto = item.getAttribute('data-recinto') || '';
+        const tipo = item.getAttribute('data-tipo') || '';
+
+        let show = true;
+        if (centroSeleccionado && recinto !== centroSeleccionado) show = false;
+        if (tipoSeleccionado && tipo !== tipoSeleccionado) show = false;
+
+        item.style.display = show ? '' : 'none';
+    });
+
+    // Actualizar mensajes de grids vacíos tras filtrar
+    mostrarMensajeGridsVaciosFiltrados();
+}
+
+function mostrarMensajeGridsVaciosFiltrados() {
+    const gridIds = ['bento-grid-led', 'bento-grid-ajedrez', 'bento-grid-packs', 'bento-grid-videos'];
+    gridIds.forEach(id => {
+        const grid = document.getElementById(id);
+        if (!grid) return;
+        const visibleItems = grid.querySelectorAll('.bento-item:not([style*="display: none"])');
+        const existingMsg = grid.querySelector('.empty-tab-msg');
+
+        if (visibleItems.length === 0) {
+            if (!existingMsg) {
+                const msg = document.createElement('div');
+                msg.className = 'empty-tab-msg';
+                msg.innerHTML = `<p>🔍 No hay resultados con los filtros seleccionados.</p>`;
+                grid.appendChild(msg);
+            }
+        } else {
+            if (existingMsg) existingMsg.remove();
+        }
+    });
+}
+
 // 2. Lógica del Lightbox Modal
 function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
     const oldMedia = lightboxMediaContainer.querySelector('img, video, iframe');
@@ -131,7 +276,7 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
     let newMedia;
     if (isYoutube) {
         newMedia = document.createElement('iframe');
-        const match = mediaSrc.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+        const match = mediaSrc.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\\&v=)([^#\\&\\?]*).*/);
         const yId = (match && match[2].length === 11) ? match[2] : null;
         newMedia.src = `https://www.youtube.com/embed/${yId}?autoplay=1`;
         newMedia.frameBorder = "0";
@@ -151,7 +296,12 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
     // Insert as the first child right before the overlay text
     lightboxMediaContainer.insertBefore(newMedia, lightboxMediaContainer.querySelector('.lightbox-overlay-text'));
 
-    lightboxLocation.textContent = ubicacion?.recinto || ubicacion?.comuna || "Ubicación Premium";
+    const recinto = ubicacion?.recinto || '';
+    const comuna = ubicacion?.comuna || '';
+    let locationText = recinto;
+    if (recinto && comuna) locationText = `${recinto}, ${comuna}`;
+    else if (comuna) locationText = comuna;
+    lightboxLocation.textContent = locationText || "Ubicación Premium";
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
@@ -249,9 +399,11 @@ function crearMockData() {
     ];
     grids.forEach(g => { if (g) g.innerHTML = ''; });
 
+    allEventosData = [...mocks];
     if (heroReelsContainer) heroReelsContainer.innerHTML = '';
     mocks.forEach(renderBentoItem);
     renderHeroReel(mocks[1]); // Renderizar el video de test de reels
+    poblarFiltrosDelTab();
     mostrarMensajeGridsVacios();
 }
 
@@ -285,7 +437,14 @@ function mostrarMensajeGridsVacios() {
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('bento-grid-led') || bentoGrid) {
         fetchEventos();
+        fetchCatalogoPDF();
     }
+
+    // --- Lógica de Filtros ---
+    const filterCentro = document.getElementById('filter-centro');
+    const filterTipo = document.getElementById('filter-tipo');
+    if (filterCentro) filterCentro.addEventListener('change', aplicarFiltros);
+    if (filterTipo) filterTipo.addEventListener('change', aplicarFiltros);
 
     // --- Lógica de Pestañas (Catálogo) ---
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -303,6 +462,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const targetGrid = document.getElementById(targetId);
         if (targetGrid) targetGrid.classList.add('active-content');
+
+        // Actualizar tab activo y re-poblar filtros contextuales
+        activeTabId = targetId;
+        poblarFiltrosDelTab();
 
         // Navegar a la sección bajando suavemente
         const catalogoSection = document.getElementById('catalogo');
@@ -327,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const animateCounters = () => {
             statNumbers.forEach(stat => {
                 const target = +stat.getAttribute('data-target');
-                const duration = 2000; // 2 segundos
+                const duration = 1000; // 1 segundo
                 const increment = target / (duration / 16);
 
                 let current = 0;

@@ -457,9 +457,22 @@ section {
 /* Bento Grid */
 .bento-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     grid-auto-rows: 350px;
+}
+
+/* Packs: tarjetas verticales que muestran toda la imagen */
+#bento-grid-packs {
+    grid-auto-rows: auto;
+}
+
+#bento-grid-packs .bento-item {
+    aspect-ratio: 3 / 5;
+}
+
+#bento-grid-packs .bento-item img {
+    object-position: top;
 }
 
 .bento-item {
@@ -484,6 +497,7 @@ section {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: top;
     transition: opacity 0.3s;
 }
 
@@ -516,6 +530,82 @@ section {
     border-radius: 12px;
     display: inline-block;
     font-weight: 700;
+}
+
+/* --- Catalog Filters --- */
+.catalog-filters {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.catalog-filter-select {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
+    color: var(--text-light);
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-width: 200px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a1a1aa' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 35px;
+}
+
+.catalog-filter-select:focus {
+    outline: none;
+    border-color: var(--gold-primary);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.catalog-filter-select option {
+    background-color: #111;
+    color: var(--text-light);
+}
+
+/* --- PDF Download Button --- */
+.btn-download-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05));
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: var(--gold-primary);
+    padding: 10px 22px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-download-pdf:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(212, 175, 55, 0.1));
+    border-color: var(--gold-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+}
+
+.btn-download-pdf svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.catalog-header-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
 }
 
 /* Empty tab message */
@@ -796,5 +886,30 @@ footer {
         flex-shrink: 0;
         font-size: 0.95rem;
         padding: 8px 15px;
+    }
+
+    /* Mobile: 2 columns */
+    .bento-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-auto-rows: 280px;
+    }
+
+    #bento-grid-packs {
+        grid-auto-rows: auto;
+    }
+
+    #bento-grid-packs .bento-item {
+        aspect-ratio: 3 / 5;
+    }
+
+    .catalog-filters {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0 10px;
+    }
+
+    .catalog-filter-select {
+        min-width: unset;
+        width: 100%;
     }
 }
