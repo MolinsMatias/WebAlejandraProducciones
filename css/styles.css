@@ -311,8 +311,14 @@ section {
     /* La imagen de fondo se puede cambiar acá */
     background: url('../assets/pista_bg.webp') no-repeat center center;
     background-size: cover;
-    background-attachment: fixed;
     z-index: 1;
+}
+
+/* Parallax solo en navegadores que lo soporten bien (no Safari iOS) */
+@supports (background-attachment: fixed) {
+    .hero-section {
+        background-attachment: fixed;
+    }
 }
 
 /* Capa de desenfoque y oscurecimiento */
@@ -510,6 +516,26 @@ section {
     border-radius: 12px;
     display: inline-block;
     font-weight: 700;
+}
+
+/* Empty tab message */
+.empty-tab-msg {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    background: var(--glass-bg);
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+}
+
+.empty-tab-msg p {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    line-height: 1.8;
 }
 
 /* Lightbox Modal */
@@ -725,7 +751,7 @@ footer {
         flex-direction: column;
         text-align: center;
         padding-top: 160px;
-        background-attachment: scroll;
+        background-attachment: scroll !important; /* iOS Safari fix */
         background-position: center;
     }
 
@@ -748,5 +774,27 @@ footer {
 
     .section-title {
         font-size: 2.2rem;
+    }
+
+    /* Tabs scrolleables en mobile */
+    .catalog-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .catalog-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.95rem;
+        padding: 8px 15px;
     }
 }

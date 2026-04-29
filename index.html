@@ -1,17 +1,79 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-CL">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alejandra Producciones | Eventos Premium</title>
+    <title>Alejandra Producciones | Arriendo Pistas LED & Eventos Premium en Chile</title>
     <meta name="description"
-        content="Productores de eventos premium. Ofrecemos pista infinity, pista ajedrez, pirotecnia, humo bajo y mucho más.">
-    <!-- Google Fonts: Inter -->
+        content="Arriendo de pistas de baile LED infinity, pistas ajedrez, iluminación profesional y DJ para matrimonios y eventos corporativos en Santiago y todo Chile.">
+    <meta name="keywords"
+        content="pista de baile LED, arriendo pista infinity, eventos Santiago, matrimonios Chile, pista ajedrez, iluminación eventos, DJ eventos, producción eventos premium">
+    <meta name="author" content="Alejandra Producciones">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.alejandraproducciones.cl/">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/favicon.png">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.alejandraproducciones.cl/">
+    <meta property="og:title" content="Alejandra Producciones | Eventos Premium en Chile">
+    <meta property="og:description"
+        content="Arriendo de pistas de baile LED infinity, pistas ajedrez, iluminación y DJ para matrimonios y eventos corporativos.">
+    <meta property="og:image" content="https://www.alejandraproducciones.cl/assets/og-image.jpg">
+    <meta property="og:locale" content="es_CL">
+    <meta property="og:site_name" content="Alejandra Producciones">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Alejandra Producciones | Eventos Premium en Chile">
+    <meta name="twitter:description"
+        content="Arriendo de pistas de baile LED infinity, pistas ajedrez, iluminación y DJ para matrimonios y eventos corporativos.">
+    <meta name="twitter:image" content="https://www.alejandraproducciones.cl/assets/og-image.jpg">
+
+    <!-- Preload hero background for faster LCP -->
+    <link rel="preload" as="image" href="assets/pista_bg.webp" type="image/webp">
+
+    <!-- Google Fonts: Inter + Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "EventPlanning",
+        "name": "Alejandra Producciones",
+        "description": "Arriendo de pistas de baile LED infinity, pistas ajedrez, iluminación profesional y DJ para matrimonios y eventos corporativos en Chile.",
+        "telephone": "+56988475188",
+        "email": "ale@alejandraproducciones.cl",
+        "url": "https://www.alejandraproducciones.cl",
+        "logo": "https://www.alejandraproducciones.cl/assets/logo.png",
+        "image": "https://www.alejandraproducciones.cl/assets/og-image.jpg",
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Santiago",
+            "addressRegion": "Región Metropolitana",
+            "addressCountry": "CL"
+        },
+        "sameAs": [
+            "https://www.instagram.com/alejandra_producciones"
+        ],
+        "priceRange": "$$",
+        "openingHoursSpecification": {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+            "opens": "09:00",
+            "closes": "21:00"
+        }
+    }
+    </script>
+
     <!-- Firebase SDKs -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/app.js" defer></script>
@@ -24,10 +86,10 @@
         <div class="nav-container">
             <a href="#" class="logo">
                 <!-- Por favor reemplaza 'logo.png' por el archivo real de tu logo en la carpeta assets -->
-                <img src="assets/logo.svg" alt="Alejandra Producciones" class="logo-img"
+                <img src="assets/logo.svg" alt="Alejandra Producciones - Eventos Premium" class="logo-img"
                     style="height: 50px; width: 50px; object-fit: contain;">
             </a>
-            
+
             <nav id="nav-menu">
                 <a href="#inicio" class="nav-link">Inicio</a>
                 <a href="#servicios" class="nav-link">Servicios</a>
@@ -54,7 +116,7 @@
                     </svg>
                 </a>
                 <a href="#contacto" class="btn-primary">Cotizar</a>
-                
+
                 <button class="hamburger" id="hamburger" aria-label="Menú">
                     <span></span>
                     <span></span>
@@ -86,56 +148,69 @@
                 <!-- Servicio 1 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-infinity.webp');">
-                            <div class="servicio-icon">✨</div>
+                        <div class="servicio-front"
+                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-infinity.webp');">
+                            <div class="servicio-icon" aria-hidden="true">✨</div>
                             <h3>Pistas LED Infinity</h3>
                         </div>
                         <div class="servicio-back">
                             <h3>Pistas LED Infinity</h3>
-                            <p>Ilumina tu evento con nuestras pistas de baile LED de última generación. Brillantes, resistentes y operadas profesionalmente vía control DMX para crear efectos visuales fascinantes.</p>
-                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;" onclick="abrirCatalogoEn('bento-grid-led')">Ver Ejemplos</button>
+                            <p>Ilumina tu evento con nuestras pistas de baile LED de última generación. Brillantes,
+                                resistentes y operadas profesionalmente vía control DMX para crear efectos visuales
+                                fascinantes.</p>
+                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
+                                onclick="abrirCatalogoEn('bento-grid-led')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
                 <!-- Servicio 2 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-ajedrez.webp');">
-                            <div class="servicio-icon">♟️</div>
+                        <div class="servicio-front"
+                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-ajedrez.webp');">
+                            <div class="servicio-icon" aria-hidden="true">♟️</div>
                             <h3>Pistas de Ajedrez</h3>
                         </div>
                         <div class="servicio-back">
                             <h3>Pistas de Ajedrez</h3>
-                            <p>La elegancia clásica que tu matrimonio necesita. Suelos ajedrezados en blanco y negro de alto brillo y resistencia premium.</p>
-                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;" onclick="abrirCatalogoEn('bento-grid-ajedrez')">Ver Ejemplos</button>
+                            <p>La elegancia clásica que tu matrimonio necesita. Suelos ajedrezados en blanco y negro de
+                                alto brillo y resistencia premium.</p>
+                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
+                                onclick="abrirCatalogoEn('bento-grid-ajedrez')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
                 <!-- Servicio 3 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
-                            <div class="servicio-icon">💡</div>
+                        <div class="servicio-front"
+                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-iluminacion.webp');">
+                            <div class="servicio-icon" aria-hidden="true">💡</div>
                             <h3>Iluminación Profesional</h3>
                         </div>
                         <div class="servicio-back">
                             <h3>Iluminación Profesional</h3>
-                            <p>Genera atmósferas envolventes con nuestras cabezas móviles, focos perimetrales y show láser inteligente.</p>
-                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;" onclick="abrirCatalogoEn('bento-grid-videos')">Ver Ejemplos</button>
+                            <p>Genera atmósferas envolventes con nuestras cabezas móviles, focos perimetrales y show
+                                láser inteligente.</p>
+                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
+                                onclick="abrirCatalogoEn('bento-grid-videos')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
                 <!-- Servicio 4 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80');">
-                            <div class="servicio-icon">🎧</div>
+                        <div class="servicio-front"
+                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-dj.webp');">
+                            <div class="servicio-icon" aria-hidden="true">🎧</div>
                             <h3>DJ y Amplificación</h3>
                         </div>
                         <div class="servicio-back">
                             <h3>DJ y Amplificación</h3>
-                            <p>Equipamiento de sonido profesional inmersivo y DJs experimentados listos para hacer vibrar la pista hasta el amanecer.</p>
-                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;" onclick="abrirCatalogoEn('bento-grid-videos')">Ver Ejemplos</button>
+                            <p>Equipamiento de sonido profesional inmersivo y DJs experimentados listos para hacer
+                                vibrar la pista hasta el amanecer.</p>
+                            <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
+                                onclick="abrirCatalogoEn('bento-grid-videos')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
@@ -163,7 +238,7 @@
         <!-- Sección Catálogo -->
         <section id="catalogo" class="catalogo-section">
             <h2 class="section-title">Catálogo <span class="gold-accent">Premium</span></h2>
-            
+
             <!-- Navbar de Pestañas -->
             <div class="catalog-tabs">
                 <button class="tab-btn active" data-target="bento-grid-led">Pistas LED</button>
@@ -173,10 +248,26 @@
             </div>
 
             <!-- Contenedores del Grid -->
-            <div id="bento-grid-led" class="bento-grid tab-content active-content"></div>
-            <div id="bento-grid-ajedrez" class="bento-grid tab-content"></div>
-            <div id="bento-grid-packs" class="bento-grid tab-content"></div>
-            <div id="bento-grid-videos" class="bento-grid tab-content"></div>
+            <div id="bento-grid-led" class="bento-grid tab-content active-content">
+                <div class="empty-tab-msg">
+                    <p>⏳ Cargando contenido...</p>
+                </div>
+            </div>
+            <div id="bento-grid-ajedrez" class="bento-grid tab-content">
+                <div class="empty-tab-msg">
+                    <p>⏳ Cargando contenido...</p>
+                </div>
+            </div>
+            <div id="bento-grid-packs" class="bento-grid tab-content">
+                <div class="empty-tab-msg">
+                    <p>⏳ Cargando contenido...</p>
+                </div>
+            </div>
+            <div id="bento-grid-videos" class="bento-grid tab-content">
+                <div class="empty-tab-msg">
+                    <p>⏳ Cargando contenido...</p>
+                </div>
+            </div>
         </section>
 
         <!-- Lightbox / Modal -->
@@ -206,7 +297,8 @@
                     </select>
 
                     <div id="container_otro_evento" style="display: none; margin-top: -5px; margin-bottom: 15px;">
-                        <input type="text" id="otro_evento" name="otro_evento" placeholder="Especificar otro tipo de evento...">
+                        <input type="text" id="otro_evento" name="otro_evento"
+                            placeholder="Especificar otro tipo de evento...">
                     </div>
 
                     <label for="descripcion">Breve Descripción</label>

@@ -52,6 +52,9 @@ async function fetchEventos() {
         console.warn("Fallo lectura Firebase. Cargando Mock UI...");
         crearMockData();
     }
+
+    // Después de cargar, mostrar mensaje en grids vacíos
+    mostrarMensajeGridsVacios();
 }
 
 function renderBentoItem(data) {
@@ -61,7 +64,7 @@ function renderBentoItem(data) {
     // Al hacer click, abrir el lightbox
     item.addEventListener('click', () => openLightbox(data.urlImagen, data.ubicacion, data.tipoArchivo));
 
-    let mediaHTML = `<img src="${data.urlImagen}" alt="${data.titulo}" loading="lazy">`;
+    let mediaHTML = `<img src="${data.urlImagen}" alt="${data.titulo} - ${data.tipoEvento} - Alejandra Producciones" loading="lazy">`;
 
     if (data.tipoArchivo === 'youtube') {
         const getYoutubeId = (url) => {
@@ -85,6 +88,8 @@ function renderBentoItem(data) {
     `;
 
     let targetId = 'bento-grid-led';
+
+    const isVideo = data.tipoArchivo === 'video' || data.tipoArchivo === 'youtube' || (data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov') || data.urlImagen.includes('.webm')));
 
     // 1. Usar seccionCatalogo si el Admin App lo provee (Nuevo sistema)
     if (data.seccionCatalogo) {
@@ -247,6 +252,33 @@ function crearMockData() {
     if (heroReelsContainer) heroReelsContainer.innerHTML = '';
     mocks.forEach(renderBentoItem);
     renderHeroReel(mocks[1]); // Renderizar el video de test de reels
+    mostrarMensajeGridsVacios();
+}
+
+// Mostrar mensaje amigable en pestañas vacías
+function mostrarMensajeGridsVacios() {
+    const gridIds = ['bento-grid-led', 'bento-grid-ajedrez', 'bento-grid-packs', 'bento-grid-videos'];
+    const labels = { 'bento-grid-led': 'Pistas LED', 'bento-grid-ajedrez': 'Ajedrez', 'bento-grid-packs': 'Packs', 'bento-grid-videos': 'Videos' };
+    gridIds.forEach(id => {
+        const grid = document.getElementById(id);
+        if (!grid) return;
+        // Verificar si solo tiene el empty-tab-msg o está realmente vacío de bento-items
+        const items = grid.querySelectorAll('.bento-item');
+        const existingMsg = grid.querySelector('.empty-tab-msg');
+        if (items.length === 0) {
+            if (!existingMsg) {
+                const msg = document.createElement('div');
+                msg.className = 'empty-tab-msg';
+                msg.innerHTML = `<p>📸 Próximamente fotos de <strong>${labels[id]}</strong>. ¡Contáctanos para más info!</p>`;
+                grid.appendChild(msg);
+            } else {
+                existingMsg.innerHTML = `<p>📸 Próximamente fotos de <strong>${labels[id]}</strong>. ¡Contáctanos para más info!</p>`;
+            }
+        } else {
+            // Si hay items, remover el mensaje de carga
+            if (existingMsg) existingMsg.remove();
+        }
+    });
 }
 
 // Inicializar la carga al cargar DOM
