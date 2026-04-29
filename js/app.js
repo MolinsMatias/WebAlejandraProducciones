@@ -179,8 +179,14 @@ if (contactForm) {
         e.preventDefault();
 
         const nombre = document.getElementById('nombre').value;
-        const tipoEvento = document.getElementById('tipo_evento').value;
+        const tipoEventoSelect = document.getElementById('tipo_evento').value;
+        const otroEvento = document.getElementById('otro_evento').value;
         const desc = document.getElementById('descripcion').value;
+
+        let tipoEvento = tipoEventoSelect;
+        if (tipoEventoSelect === 'Otro' && otroEvento.trim() !== '') {
+            tipoEvento = otroEvento.trim();
+        }
 
         // Número de teléfono de WhatsApp del producor (Incluir código país, sin +)
         const phone = "56988475188";
@@ -189,6 +195,20 @@ if (contactForm) {
 
         const url = `https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`;
         window.open(url, '_blank');
+    });
+
+    const selectTipoEvento = document.getElementById('tipo_evento');
+    const containerOtroEvento = document.getElementById('container_otro_evento');
+    const inputOtroEvento = document.getElementById('otro_evento');
+
+    selectTipoEvento.addEventListener('change', (e) => {
+        if (e.target.value === 'Otro') {
+            containerOtroEvento.style.display = 'block';
+            inputOtroEvento.required = true;
+        } else {
+            containerOtroEvento.style.display = 'none';
+            inputOtroEvento.required = false;
+        }
     });
 }
 
