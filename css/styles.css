@@ -246,12 +246,20 @@ section {
 }
 
 .tab-content.active-content {
-    display: grid !important; /* El bento-grid usa grid */
+    display: grid !important;
+    /* El bento-grid usa grid */
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* --- Estadísticas (Contadores) --- */
@@ -367,7 +375,8 @@ section {
     transform: rotateY(180deg);
 }
 
-.servicio-front, .servicio-back {
+.servicio-front,
+.servicio-back {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -408,7 +417,7 @@ section {
 .servicio-front h3 {
     font-size: 1.6rem;
     color: #fff;
-    text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.9);
 }
 
 .servicio-back h3 {
@@ -472,7 +481,7 @@ section {
 }
 
 #bento-grid-packs .bento-item img {
-    object-position: top;
+    object-position: bottom;
 }
 
 .bento-item {
@@ -497,8 +506,14 @@ section {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: top;
+    object-position: middle;
     transition: opacity 0.3s;
+}
+
+.bento-item iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 .bento-item:hover img,
@@ -530,6 +545,25 @@ section {
     border-radius: 12px;
     display: inline-block;
     font-weight: 700;
+}
+
+/* Badge de metros cuadrados */
+.bento-m2-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: var(--gold-hover);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 2;
+    pointer-events: none;
 }
 
 /* --- Catalog Filters --- */
@@ -661,6 +695,25 @@ section {
     box-shadow: 0 0 50px rgba(212, 175, 55, 0.15);
 }
 
+.lightbox-content iframe {
+    border-radius: 15px;
+    box-shadow: 0 0 50px rgba(212, 175, 55, 0.15);
+}
+
+/* Vertical YouTube videos (9:16 Shorts/Reels) */
+.lightbox-content iframe.yt-vertical {
+    width: min(360px, 90vw);
+    height: min(640px, 80vh);
+    aspect-ratio: 9 / 16;
+}
+
+/* Horizontal YouTube videos (16:9) */
+.lightbox-content iframe.yt-horizontal {
+    width: min(900px, 90vw);
+    height: min(506px, 80vh);
+    aspect-ratio: 16 / 9;
+}
+
 .lightbox-overlay-text {
     position: absolute;
     bottom: -40px;
@@ -685,6 +738,53 @@ section {
 .lightbox-close:hover {
     color: var(--gold-primary);
 }
+
+/* Botones de navegación del lightbox (flechas) */
+.lightbox-nav {
+    display: none; /* Ocultos por defecto, JS los muestra */
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20, 20, 20, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 3rem;
+    line-height: 1;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1100;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    user-select: none;
+}
+
+.lightbox-nav:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-nav-prev { left: 20px; }
+.lightbox-nav-next { right: 20px; }
+
+@media (max-width: 868px) {
+    .lightbox-nav {
+        width: 44px;
+        height: 44px;
+        font-size: 2rem;
+        background: rgba(10, 10, 10, 0.85);
+    }
+    .lightbox-nav-prev { left: 10px; }
+    .lightbox-nav-next { right: 10px; }
+}
+
+
 
 /* Contact Form */
 .contacto-container {
@@ -841,12 +941,14 @@ footer {
         flex-direction: column;
         text-align: center;
         padding-top: 160px;
-        background-attachment: scroll !important; /* iOS Safari fix */
+        background-attachment: scroll !important;
+        /* iOS Safari fix */
         background-position: center;
     }
 
     .hero-section::before {
-        background: rgba(5, 5, 5, 0.60); /* Oscurecimiento mayor para móviles */
+        background: rgba(5, 5, 5, 0.60);
+        /* Oscurecimiento mayor para móviles */
     }
 
     .hero-reels {
@@ -870,6 +972,7 @@ footer {
     .catalog-tabs {
         flex-wrap: nowrap;
         overflow-x: auto;
+        overflow-y: hidden;
         justify-content: flex-start;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;

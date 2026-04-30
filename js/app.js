@@ -15,6 +15,10 @@ let allEventosData = [];
 // Tab activo actual
 let activeTabId = 'bento-grid-led';
 
+// Navegación del lightbox
+let lightboxCurrentIndex = -1;
+let lightboxVisibleItems = [];
+
 // Map de seccionCatalogo a gridId
 const seccionToGrid = {
     'Pistas LED': 'bento-grid-led',
@@ -97,31 +101,44 @@ function renderBentoItem(data) {
     const item = document.createElement('div');
     item.className = 'bento-item';
 
-    // Data attributes para filtrado
+    // Data attributes para filtrado y navegación del lightbox
     const recinto = data.ubicacion?.recinto || '';
     const tipoEvento = data.tipoEvento || '';
     item.setAttribute('data-recinto', recinto);
     item.setAttribute('data-tipo', tipoEvento);
+    item.setAttribute('data-url-imagen', data.urlImagen || '');
+    item.setAttribute('data-tipo-archivo', data.tipoArchivo || 'image');
+    item.setAttribute('data-comuna', data.ubicacion?.comuna || '');
+    item.setAttribute('data-metros', data.metrosCuadrados || '');
 
-    // Al hacer click, abrir el lightbox
-    item.addEventListener('click', () => openLightbox(data.urlImagen, data.ubicacion, data.tipoArchivo));
+    // Al hacer click, abrir el lightbox con navegación
+    item.addEventListener('click', () => {
+        const activeGrid = document.getElementById(activeTabId);
+        if (activeGrid) {
+            lightboxVisibleItems = Array.from(activeGrid.querySelectorAll('.bento-item:not([style*="display: none"])'));
+            lightboxCurrentIndex = lightboxVisibleItems.indexOf(item);
+        }
+        openLightbox(data.urlImagen, data.ubicacion, data.tipoArchivo, data.metrosCuadrados);
+    });
 
     let mediaHTML = `<img src="${data.urlImagen}" alt="${data.titulo} - ${data.tipoEvento} - Alejandra Producciones" loading="lazy">`;
 
     if (data.tipoArchivo === 'youtube') {
-        const getYoutubeId = (url) => {
-            const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\\&v=)([^#\\&\\?]*).*/);
-            return (match && match[2].length === 11) ? match[2] : null;
-        };
         const yId = getYoutubeId(data.urlImagen);
         if (yId) {
-            mediaHTML = `<iframe src="https://www.youtube.com/embed/${yId}?autoplay=0&controls=1&rel=0&showinfo=0" frameborder="0" allowfullscreen style="width:100%; height:100%; pointer-events: none;"></iframe>`;
+            // Usar thumbnail de máxima resolución en el grid
+            mediaHTML = `<img src="https://img.youtube.com/vi/${yId}/maxresdefault.jpg" alt="${data.titulo} - YouTube" loading="lazy"
+                onerror="this.src='https://img.youtube.com/vi/${yId}/hqdefault.jpg'">`;
         }
     } else if (data.tipoArchivo === 'video' || (data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov')))) {
         mediaHTML = `<video src="${data.urlImagen}" loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>`;
     }
 
+    // Badge de m² si tiene datos
+    const m2Badge = data.metrosCuadrados ? `<div class="bento-m2-badge">${data.metrosCuadrados} m²</div>` : '';
+
     item.innerHTML = `
+        ${m2Badge}
         ${mediaHTML}
         <div class="bento-info">
             <h3>${data.titulo}</h3>
@@ -265,8 +282,21 @@ function mostrarMensajeGridsVaciosFiltrados() {
     });
 }
 
+// Helper para extraer ID de YouTube
+function getYoutubeId(url) {
+    if (!url) return null;
+    const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\\&v=|shorts\/)([^#\\&\\?]*).*/);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// Detectar si un URL de YouTube es vertical (Shorts)
+function isYoutubeVertical(url) {
+    if (!url) return false;
+    return url.includes('/shorts/') || url.includes('shorts%2F');
+}
+
 // 2. Lógica del Lightbox Modal
-function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
+function buildLightboxMedia(mediaSrc, tipoArchivo) {
     const oldMedia = lightboxMediaContainer.querySelector('img, video, iframe');
     if (oldMedia) oldMedia.remove();
 
@@ -276,13 +306,13 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
     let newMedia;
     if (isYoutube) {
         newMedia = document.createElement('iframe');
-        const match = mediaSrc.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\\&v=)([^#\\&\\?]*).*/);
-        const yId = (match && match[2].length === 11) ? match[2] : null;
+        const yId = getYoutubeId(mediaSrc);
+        const isVertical = isYoutubeVertical(mediaSrc);
         newMedia.src = `https://www.youtube.com/embed/${yId}?autoplay=1`;
         newMedia.frameBorder = "0";
         newMedia.allowFullscreen = true;
-        newMedia.style.width = "100%";
-        newMedia.style.height = "100%";
+        newMedia.allow = "autoplay; fullscreen";
+        newMedia.className = isVertical ? 'yt-vertical' : 'yt-horizontal';
     } else if (isVideoLocal) {
         newMedia = document.createElement('video');
         newMedia.src = mediaSrc;
@@ -293,38 +323,132 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo) {
         newMedia.src = mediaSrc;
     }
 
-    // Insert as the first child right before the overlay text
     lightboxMediaContainer.insertBefore(newMedia, lightboxMediaContainer.querySelector('.lightbox-overlay-text'));
+}
+
+function updateLightboxNav() {
+    const btnPrev = document.getElementById('lightbox-prev');
+    const btnNext = document.getElementById('lightbox-next');
+    if (!btnPrev || !btnNext) return;
+    const total = lightboxVisibleItems.length;
+    btnPrev.style.display = total > 1 ? 'flex' : 'none';
+    btnNext.style.display = total > 1 ? 'flex' : 'none';
+}
+
+function openLightbox(mediaSrc, ubicacion, tipoArchivo, metrosCuadrados) {
+    buildLightboxMedia(mediaSrc, tipoArchivo);
 
     const recinto = ubicacion?.recinto || '';
     const comuna = ubicacion?.comuna || '';
     let locationText = recinto;
     if (recinto && comuna) locationText = `${recinto}, ${comuna}`;
     else if (comuna) locationText = comuna;
+    if (metrosCuadrados) {
+        locationText = locationText ? `${locationText} · ${metrosCuadrados} m²` : `${metrosCuadrados} m²`;
+    }
     lightboxLocation.textContent = locationText || "Ubicación Premium";
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    updateLightboxNav();
+}
+
+function navigateLightbox(direction) {
+    const total = lightboxVisibleItems.length;
+    if (total <= 1) return;
+
+    lightboxCurrentIndex = (lightboxCurrentIndex + direction + total) % total;
+    const targetItem = lightboxVisibleItems[lightboxCurrentIndex];
+    if (!targetItem) return;
+
+    // Extraer datos del item (están en el click handler, usamos atributos de datos que podemos inferir)
+    // Usamos el dataset que almacenamos al renderizar
+    const urlImagen = targetItem.dataset.urlImagen;
+    const tipoArchivo = targetItem.dataset.tipoArchivo;
+    const recinto = targetItem.dataset.recinto;
+    const comuna = targetItem.dataset.comuna;
+    const metrosCuadrados = targetItem.dataset.metros;
+
+    // Animar la transición
+    const mediaEl = lightboxMediaContainer.querySelector('img, video, iframe');
+    if (mediaEl) {
+        mediaEl.style.opacity = '0';
+        mediaEl.style.transform = direction > 0 ? 'translateX(-30px)' : 'translateX(30px)';
+    }
+
+    setTimeout(() => {
+        buildLightboxMedia(urlImagen, tipoArchivo);
+        const newMediaEl = lightboxMediaContainer.querySelector('img, video, iframe');
+        if (newMediaEl) {
+            newMediaEl.style.opacity = '0';
+            newMediaEl.style.transform = direction > 0 ? 'translateX(30px)' : 'translateX(-30px)';
+            newMediaEl.style.transition = 'none';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    newMediaEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    newMediaEl.style.opacity = '1';
+                    newMediaEl.style.transform = 'translateX(0)';
+                });
+            });
+        }
+
+        let locationText = recinto || '';
+        if (recinto && comuna) locationText = `${recinto}, ${comuna}`;
+        else if (comuna) locationText = comuna;
+        if (metrosCuadrados) {
+            locationText = locationText ? `${locationText} · ${metrosCuadrados} m²` : `${metrosCuadrados} m²`;
+        }
+        lightboxLocation.textContent = locationText || 'Ubicación Premium';
+    }, 150);
 }
 
 function closeLightbox() {
     lightbox.classList.remove('active');
-    const oldMedia = lightboxMediaContainer.querySelector('video');
-    if (oldMedia) oldMedia.pause();
+    // Pausar video local si existe
+    const oldVideo = lightboxMediaContainer.querySelector('video');
+    if (oldVideo) oldVideo.pause();
+    // Destruir iframe de YouTube para detener el audio completamente
+    const oldIframe = lightboxMediaContainer.querySelector('iframe');
+    if (oldIframe) oldIframe.remove();
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
+    lightboxCurrentIndex = -1;
+    lightboxVisibleItems = [];
 }
 
 if (lightbox) {
     document.addEventListener('click', (e) => {
         if (e.target.matches('.lightbox-close')) closeLightbox();
+        if (e.target.matches('#lightbox-prev')) navigateLightbox(-1);
+        if (e.target.matches('#lightbox-next')) navigateLightbox(1);
     });
     lightbox.addEventListener('click', (e) => {
-        // Cerrar si se clickea el overlay gris y no la imagen en sí
-        if (e.target === lightbox) {
-            closeLightbox();
-        }
+        if (e.target === lightbox) closeLightbox();
     });
+
+    // Navegación con teclado (←/→/Esc)
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox.classList.contains('active')) return;
+        if (e.key === 'ArrowLeft') navigateLightbox(-1);
+        if (e.key === 'ArrowRight') navigateLightbox(1);
+        if (e.key === 'Escape') closeLightbox();
+    });
+
+    // Navegación con swipe táctil (móvil)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    lightbox.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].clientX;
+        touchStartY = e.changedTouches[0].clientY;
+    }, { passive: true });
+    lightbox.addEventListener('touchend', (e) => {
+        const deltaX = e.changedTouches[0].clientX - touchStartX;
+        const deltaY = e.changedTouches[0].clientY - touchStartY;
+        // Solo swipe horizontal significativo (mínimo 50px) y más horizontal que vertical
+        if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            navigateLightbox(deltaX < 0 ? 1 : -1);
+        }
+    }, { passive: true });
 }
 
 // 3. Formulario de Contacto -> Redirección WhatsApp
