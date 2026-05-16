@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js';
-import { collection, getDocs, getDoc, doc, orderBy, query, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, getDocs, getDoc, doc, orderBy, query, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Elementos del DOM
 const bentoGrid = document.getElementById('bento-grid');
@@ -13,19 +13,106 @@ const lightboxClose = document.getElementById('lightbox-close');
 let allEventosData = [];
 
 // Tab activo actual
-let activeTabId = 'bento-grid-led';
+let activeTabId = '';
 
 // Navegación del lightbox
 let lightboxCurrentIndex = -1;
 let lightboxVisibleItems = [];
 
-// Map de seccionCatalogo a gridId
-const seccionToGrid = {
-    'Pistas LED': 'bento-grid-led',
-    'Ajedrez': 'bento-grid-ajedrez',
-    'Packs': 'bento-grid-packs',
-    'Videos': 'bento-grid-videos'
-};
+let catalogCategories = [];
+let allGridIds = [];
+
+function getSlug(text) {
+    return text.toLowerCase().replace(/[^a-z0-9]/g, '-');
+}
+
+let isEventosListenerAttached = false;
+
+// 0.5 Cargar categorías dinámicas en tiempo real
+function fetchCategorias() {
+    try {
+        const docRef = doc(db, "config", "categorias");
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+
+                if (data.lista && Array.isArray(data.lista)) {
+                    catalogCategories = data.lista;
+                } else if (data.categorias && Array.isArray(data.categorias)) {
+                    catalogCategories = data.categorias;
+                } else {
+                    catalogCategories = [];
+                }
+            } else {
+                catalogCategories = [];
+            }
+
+            if (catalogCategories.length === 0) {
+                // Fallback
+                catalogCategories = ['Pistas LED', 'Ajedrez', 'Packs', 'Videos'];
+            }
+
+            renderCatalogTabs();
+
+            // Evitar múltiples listeners de eventos
+            if (!isEventosListenerAttached) {
+                isEventosListenerAttached = true;
+                fetchEventos();
+            } else {
+                // Si ya teníamos eventos cargados, solo los volvemos a renderizar en los nuevos tabs
+                reRenderAllEventos();
+            }
+        }, (error) => {
+            console.log("Error cargando categorías en tiempo real:", error.message);
+        });
+    } catch (error) {
+        console.log("Error al inicializar categorías:", error.message);
+    }
+}
+
+function renderCatalogTabs() {
+    const tabsContainer = document.getElementById('catalog-tabs-container');
+    const gridsContainer = document.getElementById('catalog-grids-container');
+    if (!tabsContainer || !gridsContainer) return;
+
+    tabsContainer.innerHTML = '';
+    gridsContainer.innerHTML = '';
+    allGridIds = [];
+
+    catalogCategories.forEach((cat, index) => {
+        const slug = getSlug(cat);
+        const targetId = `bento-grid-${slug}`;
+        allGridIds.push(targetId);
+
+        // Tab button
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+        btn.setAttribute('data-target', targetId);
+        btn.textContent = cat;
+        btn.addEventListener('click', () => abrirCatalogoEn(targetId));
+        tabsContainer.appendChild(btn);
+
+        // Grid container
+        const grid = document.createElement('div');
+        grid.id = targetId;
+        grid.className = `bento-grid tab-content ${index === 0 ? 'active-content' : ''}`;
+        
+        // Cargar 6 skeletons por defecto
+        grid.innerHTML = `
+            <div class="bento-item skeleton"></div>
+            <div class="bento-item skeleton"></div>
+            <div class="bento-item skeleton"></div>
+            <div class="bento-item skeleton"></div>
+            <div class="bento-item skeleton"></div>
+            <div class="bento-item skeleton"></div>
+        `;
+        gridsContainer.appendChild(grid);
+
+        if (index === 0) {
+            activeTabId = targetId;
+        }
+    });
+}
 
 // 0. Cargar URL del catálogo PDF desde Firestore
 async function fetchCatalogoPDF() {
@@ -48,50 +135,62 @@ async function fetchCatalogoPDF() {
     }
 }
 
-// 1. Obtener eventos/packs desde Firestore (bento grid)
-async function fetchEventos() {
+let isFirstEventosLoad = true;
+
+// 1. Obtener eventos/packs desde Firestore (bento grid) con tiempo real
+function fetchEventos() {
     try {
         const q = query(collection(db, "eventos"), orderBy("fecha", "desc"), limit(30));
 
-        const querySnapshot = await getDocs(q);
+        onSnapshot(q, (querySnapshot) => {
+            allEventosData = [];
+            querySnapshot.forEach((doc) => {
+                allEventosData.push(doc.data());
+            });
 
-        const grids = [
-            document.getElementById('bento-grid-led'),
-            document.getElementById('bento-grid-ajedrez'),
-            document.getElementById('bento-grid-packs'),
-            document.getElementById('bento-grid-videos')
-        ];
-        grids.forEach(g => { if (g) g.innerHTML = ''; });
+            reRenderAllEventos();
 
-        if (querySnapshot.empty) {
-            if (grids[0]) grids[0].innerHTML = '<p>No hay eventos cargados aún.</p>';
-            return;
-        }
-
-        allEventosData = [];
-        let reelsCargados = 0;
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            allEventosData.push(data);
-            renderBentoItem(data);
-
-            // Poblar los 2 primeros reels si son formato video
-            if (data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov') || data.urlImagen.includes('.webm') || data.tipoArchivo === 'video')) {
-                if (reelsCargados < 2) {
-                    renderHeroReel(data);
-                    reelsCargados++;
-                }
-            }
+        }, (error) => {
+            console.error("🔥 Error de Firebase onSnapshot:", error);
+            crearMockData();
         });
 
-        // Poblar los filtros dinámicos del tab activo
-        poblarFiltrosDelTab();
-
     } catch (error) {
-        console.error("🔥 Error real de Firebase al leer la base de datos:", error);
-        console.warn("Fallo lectura Firebase. Cargando Mock UI...");
+        console.error("🔥 Error al iniciar onSnapshot:", error);
         crearMockData();
     }
+}
+
+// Función auxiliar para re-dibujar todos los eventos
+function reRenderAllEventos() {
+    const grids = allGridIds.map(id => document.getElementById(id));
+    grids.forEach(g => { if (g) g.innerHTML = ''; });
+
+    if (allEventosData.length === 0) {
+        if (grids[0]) grids[0].innerHTML = '<p>No hay eventos cargados aún.</p>';
+        mostrarMensajeGridsVacios();
+        return;
+    }
+
+    let reelsCargados = 0;
+
+    // Limpiar hero reels por si es una actualización
+    if (heroReelsContainer) heroReelsContainer.innerHTML = '';
+
+    allEventosData.forEach((data) => {
+        renderBentoItem(data);
+
+        // Poblar los 2 primeros reels si son formato video
+        if (data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov') || data.urlImagen.includes('.webm') || data.tipoArchivo === 'video')) {
+            if (reelsCargados < 2) {
+                renderHeroReel(data);
+                reelsCargados++;
+            }
+        }
+    });
+
+    // Poblar los filtros dinámicos del tab activo
+    poblarFiltrosDelTab();
 
     // Después de cargar, mostrar mensaje en grids vacíos
     mostrarMensajeGridsVacios();
@@ -146,23 +245,21 @@ function renderBentoItem(data) {
         </div>
     `;
 
-    let targetId = 'bento-grid-led';
+    let targetId = allGridIds.length > 0 ? allGridIds[0] : '';
 
     const isVideo = data.tipoArchivo === 'video' || data.tipoArchivo === 'youtube' || (data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov') || data.urlImagen.includes('.webm')));
 
     // 1. Usar seccionCatalogo si el Admin App lo provee (Nuevo sistema)
     if (data.seccionCatalogo) {
-        if (data.seccionCatalogo === 'Ajedrez') targetId = 'bento-grid-ajedrez';
-        else if (data.seccionCatalogo === 'Packs') targetId = 'bento-grid-packs';
-        else if (data.seccionCatalogo === 'Videos') targetId = 'bento-grid-videos';
+        targetId = `bento-grid-${getSlug(data.seccionCatalogo)}`;
     } else {
         // 2. Fallback de compatibilidad para datos antiguos
         const tipo = (data.tipoEvento || '').toLowerCase();
-        if (isVideo) {
+        if (isVideo && allGridIds.includes('bento-grid-videos')) {
             targetId = 'bento-grid-videos';
-        } else if (tipo.includes('ajedrez')) {
+        } else if (tipo.includes('ajedrez') && allGridIds.includes('bento-grid-ajedrez')) {
             targetId = 'bento-grid-ajedrez';
-        } else if (tipo.includes('pack') || tipo.includes('10%') || tipo.includes('off')) {
+        } else if ((tipo.includes('pack') || tipo.includes('10%') || tipo.includes('off')) && allGridIds.includes('bento-grid-packs')) {
             targetId = 'bento-grid-packs';
         }
     }
@@ -179,38 +276,56 @@ function renderHeroReel(data) {
     heroReelsContainer.innerHTML += mediaHTML;
 }
 
-// --- Filtros dinámicos ---
-// Poblar filtros solo con los datos del tab activo
-function poblarFiltrosDelTab() {
+// --- Filtros dinámicos (Dropdowns) ---
+let currentFilterCentro = '';
+let currentFilterTipo = '';
+let currentSearchQuery = '';
+let currentSortOrder = 'none';
+let searchDebounceTimer = null;
+
+// Poblar dropdowns con datos GLOBALES de todos los tabs
+function poblarFiltrosDelTab(preserveFilters = false) {
     const filterCentro = document.getElementById('filter-centro');
     const filterTipo = document.getElementById('filter-tipo');
+    const filterSort = document.getElementById('filter-sort');
     if (!filterCentro || !filterTipo) return;
 
-    // Obtener los items del grid activo
-    const activeGrid = document.getElementById(activeTabId);
-    if (!activeGrid) return;
-
-    const items = activeGrid.querySelectorAll('.bento-item');
-
-    // Extraer valores únicos de los items de este tab
+    // Extraer valores únicos de TODOS los grids (global)
     const centros = new Set();
     const tipos = new Set();
 
-    items.forEach(item => {
-        const recinto = item.getAttribute('data-recinto');
-        const tipo = item.getAttribute('data-tipo');
-        if (recinto && recinto.trim()) centros.add(recinto.trim());
-        if (tipo && tipo.trim()) tipos.add(tipo.trim());
+    allGridIds.forEach(id => {
+        const grid = document.getElementById(id);
+        if (!grid) return;
+        grid.querySelectorAll('.bento-item').forEach(item => {
+            const recinto = item.getAttribute('data-recinto');
+            const tipo = item.getAttribute('data-tipo');
+            if (recinto && recinto.trim()) centros.add(recinto.trim());
+            if (tipo && tipo.trim()) tipos.add(tipo.trim());
+        });
     });
 
-    // Guardar valor actual para re-seleccionar si sigue disponible
-    const prevCentro = filterCentro.value;
-    const prevTipo = filterTipo.value;
+    if (!preserveFilters) {
+        // Resetear filtros al cambiar de tab
+        currentFilterCentro = '';
+        currentFilterTipo = '';
+        currentSearchQuery = '';
+        currentSortOrder = 'none';
 
-    // Limpiar y re-poblar
-    filterCentro.innerHTML = '<option value="">Todos los centros</option>';
-    filterTipo.innerHTML = '<option value="">Todos los tipos</option>';
+        // Limpiar search input
+        const searchInput = document.getElementById('catalog-search');
+        const clearBtn = document.getElementById('catalog-search-clear');
+        if (searchInput) searchInput.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+    }
 
+    // Guardar selección previa
+    const prevCentro = preserveFilters ? currentFilterCentro : '';
+    const prevTipo = preserveFilters ? currentFilterTipo : '';
+    const prevSort = preserveFilters ? currentSortOrder : 'none';
+
+    // Re-poblar select de centro
+    filterCentro.innerHTML = '<option value="">Todos los recintos</option>';
     [...centros].sort().forEach(centro => {
         const opt = document.createElement('option');
         opt.value = centro;
@@ -218,6 +333,8 @@ function poblarFiltrosDelTab() {
         filterCentro.appendChild(opt);
     });
 
+    // Re-poblar select de tipo
+    filterTipo.innerHTML = '<option value="">Todos los tipos</option>';
     [...tipos].sort().forEach(tipo => {
         const opt = document.createElement('option');
         opt.value = tipo;
@@ -225,45 +342,141 @@ function poblarFiltrosDelTab() {
         filterTipo.appendChild(opt);
     });
 
-    // Resetear filtros al cambiar de tab
-    filterCentro.value = '';
-    filterTipo.value = '';
+    // Restaurar selección
+    filterCentro.value = prevCentro;
+    filterTipo.value = prevTipo;
+    if (filterSort) filterSort.value = prevSort;
 
-    // Mostrar todos los items del tab (quitar filtro previo)
-    items.forEach(item => { item.style.display = ''; });
+    // Mostrar todos los items del tab activo (quitar filtro previo)
+    if (!preserveFilters) {
+        const activeGrid = document.getElementById(activeTabId);
+        if (activeGrid) {
+            activeGrid.querySelectorAll('.bento-item').forEach(item => {
+                item.style.display = '';
+                item.classList.remove('filtering-out', 'filtering-in');
+            });
+        }
+    }
 }
 
 function aplicarFiltros() {
-    const filterCentro = document.getElementById('filter-centro');
-    const filterTipo = document.getElementById('filter-tipo');
-    if (!filterCentro || !filterTipo) return;
-
-    const centroSeleccionado = filterCentro.value;
-    const tipoSeleccionado = filterTipo.value;
-
-    // Filtrar solo los bento-items del tab activo
+    // Primero verificar si el tab actual tiene resultados con estos filtros
     const activeGrid = document.getElementById(activeTabId);
     if (!activeGrid) return;
 
-    const items = activeGrid.querySelectorAll('.bento-item');
+    const query = currentSearchQuery.toLowerCase().trim();
+
+    // Función helper para verificar si un item cumple los filtros
+    const itemMatchesFilters = (item) => {
+        const recinto = item.getAttribute('data-recinto') || '';
+        const tipo = item.getAttribute('data-tipo') || '';
+        const titulo = item.querySelector('.bento-info h3')?.textContent || '';
+
+        if (currentFilterCentro && recinto !== currentFilterCentro) return false;
+        if (currentFilterTipo && tipo !== currentFilterTipo) return false;
+        if (query) {
+            const searchable = `${titulo} ${recinto} ${tipo}`.toLowerCase();
+            if (!searchable.includes(query)) return false;
+        }
+        return true;
+    };
+
+    // Contar matches en el tab actual
+    const currentItems = Array.from(activeGrid.querySelectorAll('.bento-item'));
+    const currentMatches = currentItems.filter(itemMatchesFilters);
+
+    // Si no hay matches en el tab actual pero sí hay un filtro activo, buscar en otros tabs
+    if (currentMatches.length === 0 && (currentFilterCentro || currentFilterTipo || query)) {
+        for (const gridId of allGridIds) {
+            if (gridId === activeTabId) continue;
+            const otherGrid = document.getElementById(gridId);
+            if (!otherGrid) continue;
+            const otherItems = Array.from(otherGrid.querySelectorAll('.bento-item'));
+            const otherMatches = otherItems.filter(itemMatchesFilters);
+            if (otherMatches.length > 0) {
+                // Auto-switch al tab que tiene resultados (sin resetear filtros)
+                const tabBtns = document.querySelectorAll('.tab-btn');
+                const tabContents = document.querySelectorAll('.tab-content');
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active-content'));
+
+                const btnActivar = Array.from(tabBtns).find(b => b.getAttribute('data-target') === gridId);
+                if (btnActivar) btnActivar.classList.add('active');
+                const targetGrid = document.getElementById(gridId);
+                if (targetGrid) targetGrid.classList.add('active-content');
+
+                activeTabId = gridId;
+                // Re-aplicar filtros en el nuevo tab
+                aplicarFiltrosEnTab();
+                return;
+            }
+        }
+    }
+
+    // Aplicar filtros normalmente en el tab actual
+    aplicarFiltrosEnTab();
+}
+
+// Aplica filtros en el tab activo sin lógica de auto-switch
+function aplicarFiltrosEnTab() {
+    const activeGrid = document.getElementById(activeTabId);
+    if (!activeGrid) return;
+
+    const items = Array.from(activeGrid.querySelectorAll('.bento-item'));
+    const query = currentSearchQuery.toLowerCase().trim();
+
     items.forEach(item => {
         const recinto = item.getAttribute('data-recinto') || '';
         const tipo = item.getAttribute('data-tipo') || '';
+        const titulo = item.querySelector('.bento-info h3')?.textContent || '';
 
         let show = true;
-        if (centroSeleccionado && recinto !== centroSeleccionado) show = false;
-        if (tipoSeleccionado && tipo !== tipoSeleccionado) show = false;
+        if (currentFilterCentro && recinto !== currentFilterCentro) show = false;
+        if (currentFilterTipo && tipo !== currentFilterTipo) show = false;
+        if (query) {
+            const searchable = `${titulo} ${recinto} ${tipo}`.toLowerCase();
+            if (!searchable.includes(query)) show = false;
+        }
 
-        item.style.display = show ? '' : 'none';
+        if (show) {
+            if (item.style.display === 'none') {
+                item.style.display = '';
+                item.classList.remove('filtering-out');
+                item.classList.add('filtering-in');
+                item.addEventListener('animationend', () => {
+                    item.classList.remove('filtering-in');
+                }, { once: true });
+            } else {
+                item.style.display = '';
+            }
+        } else {
+            item.classList.add('filtering-out');
+            setTimeout(() => {
+                if (item.classList.contains('filtering-out')) {
+                    item.style.display = 'none';
+                    item.classList.remove('filtering-out');
+                }
+            }, 350);
+        }
     });
 
+    // Aplicar ordenamiento por m²
+    if (currentSortOrder !== 'none') {
+        const visibleItems = items.filter(i => i.style.display !== 'none');
+        visibleItems.sort((a, b) => {
+            const aM = parseFloat(a.getAttribute('data-metros')) || 0;
+            const bM = parseFloat(b.getAttribute('data-metros')) || 0;
+            return currentSortOrder === 'asc' ? aM - bM : bM - aM;
+        });
+        visibleItems.forEach(item => activeGrid.appendChild(item));
+    }
+
     // Actualizar mensajes de grids vacíos tras filtrar
-    mostrarMensajeGridsVaciosFiltrados();
+    setTimeout(() => mostrarMensajeGridsVaciosFiltrados(), 400);
 }
 
 function mostrarMensajeGridsVaciosFiltrados() {
-    const gridIds = ['bento-grid-led', 'bento-grid-ajedrez', 'bento-grid-packs', 'bento-grid-videos'];
-    gridIds.forEach(id => {
+    allGridIds.forEach(id => {
         const grid = document.getElementById(id);
         if (!grid) return;
         const visibleItems = grid.querySelectorAll('.bento-item:not([style*="display: none"])');
@@ -323,7 +536,7 @@ function buildLightboxMedia(mediaSrc, tipoArchivo) {
         newMedia.src = mediaSrc;
     }
 
-    lightboxMediaContainer.insertBefore(newMedia, lightboxMediaContainer.querySelector('.lightbox-overlay-text'));
+    lightboxMediaContainer.insertBefore(newMedia, lightboxMediaContainer.querySelector('.lightbox-bottom-bar'));
 }
 
 function updateLightboxNav() {
@@ -347,10 +560,29 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo, metrosCuadrados) {
         locationText = locationText ? `${locationText} · ${metrosCuadrados} m²` : `${metrosCuadrados} m²`;
     }
     lightboxLocation.textContent = locationText || "Ubicación Premium";
+    updateLightboxCTA(locationText, metrosCuadrados);
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    
+    // Ocultar widget de WhatsApp al abrir lightbox
+    const waWidget = document.querySelector('.wa-widget-container');
+    if (waWidget) waWidget.style.display = 'none';
+
     updateLightboxNav();
+}
+
+function updateLightboxCTA(locationText, metrosCuadrados) {
+    const ctaBtn = document.getElementById('lightbox-cta');
+    if (!ctaBtn) return;
+    const phone = '56988475188';
+    let desc = '¡Hola Alejandra Producciones! 👋\n';
+    desc += 'Me encantó lo que vi en su catálogo';
+    if (locationText && locationText !== 'Ubicación Premium') {
+        desc += ` (${locationText})`;
+    }
+    desc += '.\nMe gustaría cotizar algo similar. 🎉';
+    ctaBtn.href = `https://wa.me/${phone}?text=${encodeURIComponent(desc)}`;
 }
 
 function navigateLightbox(direction) {
@@ -399,6 +631,7 @@ function navigateLightbox(direction) {
             locationText = locationText ? `${locationText} · ${metrosCuadrados} m²` : `${metrosCuadrados} m²`;
         }
         lightboxLocation.textContent = locationText || 'Ubicación Premium';
+        updateLightboxCTA(locationText, metrosCuadrados);
     }, 150);
 }
 
@@ -412,6 +645,11 @@ function closeLightbox() {
     if (oldIframe) oldIframe.remove();
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
+
+    // Mostrar widget de WhatsApp al cerrar lightbox
+    const waWidget = document.querySelector('.wa-widget-container');
+    if (waWidget) waWidget.style.display = '';
+
     lightboxCurrentIndex = -1;
     lightboxVisibleItems = [];
 }
@@ -515,12 +753,7 @@ function crearMockData() {
         }
     ];
 
-    const grids = [
-        document.getElementById('bento-grid-led'),
-        document.getElementById('bento-grid-ajedrez'),
-        document.getElementById('bento-grid-packs'),
-        document.getElementById('bento-grid-videos')
-    ];
+    const grids = allGridIds.map(id => document.getElementById(id));
     grids.forEach(g => { if (g) g.innerHTML = ''; });
 
     allEventosData = [...mocks];
@@ -533,9 +766,8 @@ function crearMockData() {
 
 // Mostrar mensaje amigable en pestañas vacías
 function mostrarMensajeGridsVacios() {
-    const gridIds = ['bento-grid-led', 'bento-grid-ajedrez', 'bento-grid-packs', 'bento-grid-videos'];
-    const labels = { 'bento-grid-led': 'Pistas LED', 'bento-grid-ajedrez': 'Ajedrez', 'bento-grid-packs': 'Packs', 'bento-grid-videos': 'Videos' };
-    gridIds.forEach(id => {
+    allGridIds.forEach((id, index) => {
+        const catName = catalogCategories[index] || 'Categoría';
         const grid = document.getElementById(id);
         if (!grid) return;
         // Verificar si solo tiene el empty-tab-msg o está realmente vacío de bento-items
@@ -545,10 +777,10 @@ function mostrarMensajeGridsVacios() {
             if (!existingMsg) {
                 const msg = document.createElement('div');
                 msg.className = 'empty-tab-msg';
-                msg.innerHTML = `<p>📸 Próximamente fotos de <strong>${labels[id]}</strong>. ¡Contáctanos para más info!</p>`;
+                msg.innerHTML = `<p>📸 Próximamente fotos de <strong>${catName}</strong>. ¡Contáctanos para más info!</p>`;
                 grid.appendChild(msg);
             } else {
-                existingMsg.innerHTML = `<p>📸 Próximamente fotos de <strong>${labels[id]}</strong>. ¡Contáctanos para más info!</p>`;
+                existingMsg.innerHTML = `<p>📸 Próximamente fotos de <strong>${catName}</strong>. ¡Contáctanos para más info!</p>`;
             }
         } else {
             // Si hay items, remover el mensaje de carga
@@ -559,22 +791,68 @@ function mostrarMensajeGridsVacios() {
 
 // Inicializar la carga al cargar DOM
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('bento-grid-led') || bentoGrid) {
-        fetchEventos();
+    if (document.getElementById('catalog-tabs-container') || bentoGrid) {
+        fetchCategorias(); // Esto llamará a fetchEventos internamente tras crear los tabs
         fetchCatalogoPDF();
     }
 
-    // --- Lógica de Filtros ---
+    // --- Lógica de Filtros (Dropdowns) ---
     const filterCentro = document.getElementById('filter-centro');
     const filterTipo = document.getElementById('filter-tipo');
-    if (filterCentro) filterCentro.addEventListener('change', aplicarFiltros);
-    if (filterTipo) filterTipo.addEventListener('change', aplicarFiltros);
+    const filterSort = document.getElementById('filter-sort');
+
+    if (filterCentro) {
+        filterCentro.addEventListener('change', () => {
+            currentFilterCentro = filterCentro.value;
+            aplicarFiltros();
+        });
+    }
+    if (filterTipo) {
+        filterTipo.addEventListener('change', () => {
+            currentFilterTipo = filterTipo.value;
+            aplicarFiltros();
+        });
+    }
+    if (filterSort) {
+        filterSort.addEventListener('change', () => {
+            currentSortOrder = filterSort.value;
+            aplicarFiltros();
+        });
+    }
+
+    // Barra de búsqueda
+    const searchInput = document.getElementById('catalog-search');
+    const searchClearBtn = document.getElementById('catalog-search-clear');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                currentSearchQuery = searchInput.value;
+                if (searchClearBtn) {
+                    searchClearBtn.style.display = currentSearchQuery ? 'block' : 'none';
+                }
+                aplicarFiltros();
+            }, 250);
+        });
+    }
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            currentSearchQuery = '';
+            searchClearBtn.style.display = 'none';
+            aplicarFiltros();
+        });
+    }
 
     // --- Lógica de Pestañas (Catálogo) ---
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+    window.abrirCatalogoEn = (catNameOrTargetId) => {
+        let targetId = catNameOrTargetId;
+        if (!targetId.startsWith('bento-grid-')) {
+            targetId = `bento-grid-${getSlug(targetId)}`;
+        }
 
-    window.abrirCatalogoEn = (targetId) => {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
         if (!tabBtns || tabBtns.length === 0) return;
 
         tabBtns.forEach(b => b.classList.remove('active'));
@@ -597,14 +875,6 @@ document.addEventListener('DOMContentLoaded', () => {
             catalogoSection.scrollIntoView({ behavior: 'smooth' });
         }
     };
-
-    if (tabBtns.length > 0) {
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                abrirCatalogoEn(btn.getAttribute('data-target'));
-            });
-        });
-    }
 
     // --- Animación de Contadores ---
     const statNumbers = document.querySelectorAll('.stat-number');
@@ -658,6 +928,72 @@ document.addEventListener('DOMContentLoaded', () => {
                 hamburger.classList.remove('active');
                 navMenu.classList.remove('active');
             });
+        });
+    }
+
+    // --- Lógica del Widget Flotante de WhatsApp ---
+    const waBtnToggle = document.getElementById('wa-btn-toggle');
+    const waPopup = document.getElementById('wa-popup');
+    const waPopupClose = document.getElementById('wa-popup-close');
+
+    if (waBtnToggle && waPopup && waPopupClose) {
+        // Abrir / Cerrar el popup al hacer clic en el botón flotante
+        waBtnToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            waPopup.classList.toggle('active');
+        });
+
+        // Cerrar al hacer clic en la X
+        waPopupClose.addEventListener('click', (e) => {
+            e.stopPropagation();
+            waPopup.classList.remove('active');
+        });
+
+        // Cerrar al hacer clic fuera del popup
+        document.addEventListener('click', (e) => {
+            if (waPopup.classList.contains('active') && !waPopup.contains(e.target) && !waBtnToggle.contains(e.target)) {
+                waPopup.classList.remove('active');
+            }
+        });
+    }
+
+    // --- Lógica del Formulario de Contacto ---
+    const contactForm = document.getElementById('contact-form');
+    const selectTipoEvento = document.getElementById('tipo_evento');
+    const containerOtroEvento = document.getElementById('container_otro_evento');
+
+    if (selectTipoEvento && containerOtroEvento) {
+        selectTipoEvento.addEventListener('change', (e) => {
+            if (e.target.value === 'Otro') {
+                containerOtroEvento.style.display = 'block';
+                document.getElementById('otro_evento').required = true;
+            } else {
+                containerOtroEvento.style.display = 'none';
+                document.getElementById('otro_evento').required = false;
+                document.getElementById('otro_evento').value = '';
+            }
+        });
+    }
+
+    if (contactForm) {
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById('nombre').value.trim();
+            let tipoEvento = document.getElementById('tipo_evento').value;
+            if (tipoEvento === 'Otro') {
+                tipoEvento = document.getElementById('otro_evento').value.trim();
+            }
+            const descripcion = document.getElementById('descripcion').value.trim();
+
+            const phone = '56988475188';
+            let message = `¡Hola Alejandra Producciones! 👋\n`;
+            message += `Mi nombre es *${nombre}*.\n`;
+            message += `Me gustaría cotizar un evento tipo: *${tipoEvento}* 🎉\n`;
+            message += `*Detalles: ${descripcion}* 📝`;
+
+            const whatsappUrl = `https://api.whatsapp.com/send/?phone=${phone}&text=${encodeURIComponent(message)}&type=phone_number&app_absent=0`;
+            window.open(whatsappUrl, '_blank');
         });
     }
 });

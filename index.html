@@ -159,7 +159,7 @@
                                 resistentes y operadas profesionalmente vía control DMX para crear efectos visuales
                                 fascinantes.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('bento-grid-led')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Pistas LED')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
@@ -176,7 +176,7 @@
                             <p>La elegancia clásica que tu matrimonio necesita. Suelos ajedrezados en blanco y negro de
                                 alto brillo y resistencia premium.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('bento-grid-ajedrez')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Ajedrez')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
@@ -193,7 +193,7 @@
                             <p>Genera atmósferas envolventes con nuestras cabezas móviles, focos perimetrales y show
                                 láser inteligente.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('bento-grid-videos')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Videos')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
@@ -210,7 +210,7 @@
                             <p>Equipamiento de sonido profesional inmersivo y DJs experimentados listos para hacer
                                 vibrar la pista hasta el amanecer.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('bento-grid-videos')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Videos')">Ver Ejemplos</button>
                         </div>
                     </div>
                 </div>
@@ -250,43 +250,66 @@
                 </a>
             </div>
 
-            <!-- Filtros de Catálogo -->
+            <!-- Barra de Búsqueda -->
+            <div class="catalog-search-container">
+                <div class="catalog-search-wrapper">
+                    <svg class="catalog-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input type="text" id="catalog-search" class="catalog-search-input"
+                        placeholder="Buscar por nombre, recinto, tipo..." autocomplete="off">
+                    <button id="catalog-search-clear" class="catalog-search-clear" style="display:none;"
+                        aria-label="Limpiar búsqueda">&times;</button>
+                </div>
+            </div>
+
+            <!-- Filtros de Catálogo (Dropdowns Premium) -->
             <div class="catalog-filters">
-                <select id="filter-centro" class="catalog-filter-select">
-                    <option value="">Todos los centros</option>
-                </select>
-                <select id="filter-tipo" class="catalog-filter-select">
-                    <option value="">Todos los tipos</option>
-                </select>
+                <div class="filter-dropdown-group">
+                    <label class="filter-label" for="filter-centro">📍 Recinto</label>
+                    <div class="custom-select-wrapper">
+                        <select id="filter-centro" class="catalog-filter-select">
+                            <option value="">Todos los recintos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-dropdown-group">
+                    <label class="filter-label" for="filter-tipo">🎉 Tipo</label>
+                    <div class="custom-select-wrapper">
+                        <select id="filter-tipo" class="catalog-filter-select">
+                            <option value="">Todos los tipos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-dropdown-group">
+                    <label class="filter-label" for="filter-sort">📏 Tamaño</label>
+                    <div class="custom-select-wrapper">
+                        <select id="filter-sort" class="catalog-filter-select">
+                            <option value="none">Sin orden</option>
+                            <option value="asc">Menor m² primero</option>
+                            <option value="desc">Mayor m² primero</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <!-- Navbar de Pestañas -->
-            <div class="catalog-tabs">
-                <button class="tab-btn active" data-target="bento-grid-led">Pistas LED</button>
-                <button class="tab-btn" data-target="bento-grid-ajedrez">Ajedrez</button>
-                <button class="tab-btn" data-target="bento-grid-packs">Packs 10% OFF</button>
-                <button class="tab-btn" data-target="bento-grid-videos">Videos</button>
+            <div class="catalog-tabs" id="catalog-tabs-container">
+                <!-- Se cargan dinámicamente -->
             </div>
 
             <!-- Contenedores del Grid -->
-            <div id="bento-grid-led" class="bento-grid tab-content active-content">
-                <div class="empty-tab-msg">
-                    <p>⏳ Cargando contenido...</p>
-                </div>
-            </div>
-            <div id="bento-grid-ajedrez" class="bento-grid tab-content">
-                <div class="empty-tab-msg">
-                    <p>⏳ Cargando contenido...</p>
-                </div>
-            </div>
-            <div id="bento-grid-packs" class="bento-grid tab-content">
-                <div class="empty-tab-msg">
-                    <p>⏳ Cargando contenido...</p>
-                </div>
-            </div>
-            <div id="bento-grid-videos" class="bento-grid tab-content">
-                <div class="empty-tab-msg">
-                    <p>⏳ Cargando contenido...</p>
+            <div id="catalog-grids-container">
+                <!-- Skeletons estáticos que se muestran inmediatamente al cargar la página -->
+                <div class="bento-grid tab-content active-content" id="bento-grid-initial-skeleton">
+                    <div class="bento-item skeleton"></div>
+                    <div class="bento-item skeleton"></div>
+                    <div class="bento-item skeleton"></div>
+                    <div class="bento-item skeleton"></div>
+                    <div class="bento-item skeleton"></div>
+                    <div class="bento-item skeleton"></div>
                 </div>
             </div>
         </section>
@@ -299,8 +322,19 @@
             <div class="lightbox-content" id="lightbox-media-container">
                 <span id="lightbox-close" class="lightbox-close">&times;</span>
                 <!-- img or video dynamic injection -->
-                <div class="lightbox-overlay-text">
-                    📍 <span id="lightbox-location">Ubicación...</span>
+                <div class="lightbox-bottom-bar">
+                    <div class="lightbox-overlay-text">
+                        📍 <span id="lightbox-location">Ubicación...</span>
+                    </div>
+                    <a id="lightbox-cta" class="lightbox-cta-btn" href="#" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                            <path
+                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                            <path
+                                d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" />
+                        </svg>
+                        Cotizar esta pista
+                    </a>
                 </div>
             </div>
         </div>
@@ -335,10 +369,66 @@
         </section>
     </main>
 
-    <!-- Botón Whatsapp Flotante -->
-    <a href="https://wa.me/56988475188" target="_blank" class="wsp-float">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" class="wsp-icon">
-    </a>
+    <!-- Botón Whatsapp Flotante Multi-Contacto -->
+    <div class="wa-widget-container">
+        <div class="wa-popup" id="wa-popup">
+            <div class="wa-popup-header">
+                <div class="wa-popup-title">Iniciar una conversación</div>
+                <div class="wa-popup-intro">¡Hola! Haz clic en uno de nuestros miembros para chatear en WhatsApp</div>
+                <button class="wa-popup-close" id="wa-popup-close" aria-label="Cerrar">&times;</button>
+            </div>
+            <div class="wa-popup-content">
+                <div class="wa-popup-notice">El equipo generalmente responde en unos minutos.</div>
+                <div class="wa-contact-list">
+                    <!-- Contacto 1 -->
+                    <a target="_blank" rel="noopener noreferrer"
+                        href="https://wa.me/56988475188?text=Hola%20Alejandra%20,%20me%20gustaría%20cotizar"
+                        class="wa-contact-item">
+                        <div class="wa-contact-avatar">
+                            <div class="wa-avatar-icon" style="background: linear-gradient(135deg, #d4af37, #aa8623);">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+                                    <path
+                                        d="M12,4A4,4 0 0,1 16,8C16,9.95 14.6,11.58 12.75,11.93L13.12,13.5C14.78,13.82 17.5,14.68 19,16.29V20H5V16.29C6.5,14.68 9.22,13.82 10.88,13.5L11.25,11.93C9.4,11.58 8,9.95 8,8A4,4 0 0,1 12,4Z" />
+                                </svg>
+                            </div>
+                            <span class="wa-status-dot online"></span>
+                        </div>
+                        <div class="wa-contact-info">
+                            <div class="wa-contact-name">Alejandra</div>
+                            <div class="wa-contact-duty">Fundadora & Productora General</div>
+                        </div>
+                    </a>
+                    <!-- Contacto 2 -->
+                    <a target="_blank" rel="noopener noreferrer"
+                        href="https://wa.me/56932053339?text=Hola%20Felipe,%20necesito%20cotizar%20para%20un%20evento"
+                        class="wa-contact-item">
+                        <div class="wa-contact-avatar">
+                            <div class="wa-avatar-icon" style="background: linear-gradient(135deg, #128c7e, #075e54);">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+                                    <path
+                                        d="M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,15L11,17L12,20L13,17L12,15Z" />
+                                </svg>
+                            </div>
+                            <span class="wa-status-dot online"></span>
+                        </div>
+                        <div class="wa-contact-info">
+                            <div class="wa-contact-name">Felipe Ibarra</div>
+                            <div class="wa-contact-duty">Ejecutivo Comercial</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <button class="wa-btn-float" id="wa-btn-toggle" aria-label="Abrir chat de WhatsApp">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor">
+                <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                <path
+                    d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" />
+            </svg>
+        </button>
+    </div>
 
     <footer>
         <div style="text-align:center; margin-bottom: 10px;">
