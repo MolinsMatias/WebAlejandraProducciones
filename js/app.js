@@ -19,6 +19,10 @@ let activeTabId = '';
 let lightboxCurrentIndex = -1;
 let lightboxVisibleItems = [];
 
+// Álbum interno del lightbox
+let albumImages = [];
+let albumCurrentIndex = 0;
+
 let catalogCategories = [];
 let allGridIds = [];
 
@@ -210,6 +214,12 @@ function renderBentoItem(data) {
     item.setAttribute('data-comuna', data.ubicacion?.comuna || '');
     item.setAttribute('data-metros', data.metrosCuadrados || '');
 
+    // Multi-imagen: guardar array de URLs
+    const urlImagenes = (data.urlImagenes && Array.isArray(data.urlImagenes) && data.urlImagenes.length > 1) ? data.urlImagenes : [];
+    if (urlImagenes.length > 0) {
+        item.setAttribute('data-url-imagenes', JSON.stringify(urlImagenes));
+    }
+
     // Al hacer click, abrir el lightbox con navegación
     item.addEventListener('click', () => {
         const activeGrid = document.getElementById(activeTabId);
@@ -217,7 +227,9 @@ function renderBentoItem(data) {
             lightboxVisibleItems = Array.from(activeGrid.querySelectorAll('.bento-item:not([style*="display: none"])'));
             lightboxCurrentIndex = lightboxVisibleItems.indexOf(item);
         }
-        openLightbox(data.urlImagen, data.ubicacion, data.tipoArchivo, data.metrosCuadrados);
+        // Preparar álbum si tiene múltiples imágenes
+        const itemUrlImagenes = urlImagenes.length > 0 ? urlImagenes : (data.urlImagen ? [data.urlImagen] : []);
+        openLightbox(data.urlImagen, data.ubicacion, data.tipoArchivo, data.metrosCuadrados, itemUrlImagenes);
     });
 
     let mediaHTML = `<img src="${data.urlImagen}" alt="${data.titulo} - ${data.tipoEvento} - Alejandra Producciones" loading="lazy">`;
@@ -236,8 +248,13 @@ function renderBentoItem(data) {
     // Badge de m² si tiene datos
     const m2Badge = data.metrosCuadrados ? `<div class="bento-m2-badge">${data.metrosCuadrados} m²</div>` : '';
 
+    // Badge de álbum si tiene múltiples imágenes (SVG camera icon)
+    const cameraIcon = `<svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="vertical-align:-2px"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M9 2 7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>`;
+    const albumBadge = urlImagenes.length > 1 ? `<div class="bento-album-badge">${cameraIcon} ${urlImagenes.length}</div>` : '';
+
     item.innerHTML = `
         ${m2Badge}
+        ${albumBadge}
         ${mediaHTML}
         <div class="bento-info">
             <h3>${data.titulo}</h3>
@@ -513,6 +530,12 @@ function buildLightboxMedia(mediaSrc, tipoArchivo) {
     const oldMedia = lightboxMediaContainer.querySelector('img, video, iframe');
     if (oldMedia) oldMedia.remove();
 
+    // Limpiar carrusel de álbum si existe
+    const oldAlbumContainer = lightboxMediaContainer.querySelector('.album-container');
+    if (oldAlbumContainer) oldAlbumContainer.remove();
+    const oldDots = lightboxMediaContainer.querySelector('.album-dots-container');
+    if (oldDots) oldDots.remove();
+
     const isVideoLocal = tipoArchivo === 'video' || (mediaSrc && (mediaSrc.includes('.mp4') || mediaSrc.includes('.mov')));
     const isYoutube = tipoArchivo === 'youtube';
 
@@ -539,6 +562,126 @@ function buildLightboxMedia(mediaSrc, tipoArchivo) {
     lightboxMediaContainer.insertBefore(newMedia, lightboxMediaContainer.querySelector('.lightbox-bottom-bar'));
 }
 
+function buildAlbumCarousel(images) {
+    // Limpiar media previa
+    const oldMedia = lightboxMediaContainer.querySelector('img, video, iframe');
+    if (oldMedia) oldMedia.remove();
+    const oldAlbumContainer = lightboxMediaContainer.querySelector('.album-container');
+    if (oldAlbumContainer) oldAlbumContainer.remove();
+    const oldDots = lightboxMediaContainer.querySelector('.album-dots-container');
+    if (oldDots) oldDots.remove();
+
+    albumImages = images;
+    albumCurrentIndex = 0;
+
+    // Precargar todas las imágenes para transiciones instantáneas
+    images.forEach(src => {
+        const preload = new Image();
+        preload.src = src;
+    });
+
+    // Contenedor del álbum
+    const albumContainer = document.createElement('div');
+    albumContainer.className = 'album-container';
+
+    const albumImg = document.createElement('img');
+    albumImg.src = images[0];
+    albumImg.className = 'album-image';
+    albumContainer.appendChild(albumImg);
+
+    // Flechas internas del álbum
+    if (images.length > 1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'album-nav album-nav-prev';
+        prevBtn.innerHTML = '&#8249;';
+        prevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateAlbum(-1);
+        });
+        albumContainer.appendChild(prevBtn);
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'album-nav album-nav-next';
+        nextBtn.innerHTML = '&#8250;';
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigateAlbum(1);
+        });
+        albumContainer.appendChild(nextBtn);
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+        albumContainer.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        albumContainer.addEventListener('touchend', (e) => {
+            e.stopPropagation();
+            touchEndX = e.changedTouches[0].screenX;
+            const threshold = 40;
+            if (touchEndX < touchStartX - threshold) navigateAlbum(1); // Swipe izquierda -> siguiente
+            if (touchEndX > touchStartX + threshold) navigateAlbum(-1); // Swipe derecha -> anterior
+        }, { passive: true });
+    }
+
+    lightboxMediaContainer.insertBefore(albumContainer, lightboxMediaContainer.querySelector('.lightbox-bottom-bar'));
+
+    // Dots de navegación
+    if (images.length > 1) {
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'album-dots-container';
+        images.forEach((_, idx) => {
+            const dot = document.createElement('button');
+            dot.className = `album-dot ${idx === 0 ? 'active' : ''}`;
+            dot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                goToAlbumIndex(idx);
+            });
+            dotsContainer.appendChild(dot);
+        });
+        lightboxMediaContainer.insertBefore(dotsContainer, lightboxMediaContainer.querySelector('.lightbox-bottom-bar'));
+    }
+}
+
+function navigateAlbum(direction) {
+    const total = albumImages.length;
+    if (total <= 1) return;
+    const newIndex = (albumCurrentIndex + direction + total) % total;
+    goToAlbumIndex(newIndex);
+}
+
+function goToAlbumIndex(index) {
+    if (index === albumCurrentIndex) return;
+    albumCurrentIndex = index;
+    const albumImg = lightboxMediaContainer.querySelector('.album-image');
+    if (albumImg) {
+        // Fade out rápido
+        albumImg.style.transition = 'opacity 0.15s ease';
+        albumImg.style.opacity = '0';
+
+        // Cambiar imagen tras fade out, fade in cuando cargue
+        setTimeout(() => {
+            albumImg.onload = () => {
+                albumImg.style.transition = 'opacity 0.2s ease';
+                albumImg.style.opacity = '1';
+                albumImg.onload = null;
+            };
+            // Si ya está cacheada, onload dispara instantáneamente
+            albumImg.src = albumImages[index];
+            // Fallback: si la imagen ya estaba en caché el onload puede no disparar
+            if (albumImg.complete) {
+                albumImg.style.transition = 'opacity 0.2s ease';
+                albumImg.style.opacity = '1';
+            }
+        }, 150);
+    }
+    // Actualizar dots
+    const dots = lightboxMediaContainer.querySelectorAll('.album-dot');
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+    });
+}
+
 function updateLightboxNav() {
     const btnPrev = document.getElementById('lightbox-prev');
     const btnNext = document.getElementById('lightbox-next');
@@ -548,8 +691,17 @@ function updateLightboxNav() {
     btnNext.style.display = total > 1 ? 'flex' : 'none';
 }
 
-function openLightbox(mediaSrc, ubicacion, tipoArchivo, metrosCuadrados) {
-    buildLightboxMedia(mediaSrc, tipoArchivo);
+function openLightbox(mediaSrc, ubicacion, tipoArchivo, metrosCuadrados, urlImagenes) {
+    // Resetear estado del álbum
+    albumImages = [];
+    albumCurrentIndex = 0;
+
+    // Si tiene múltiples imágenes, usar carrusel de álbum
+    if (urlImagenes && Array.isArray(urlImagenes) && urlImagenes.length > 1 && tipoArchivo !== 'youtube') {
+        buildAlbumCarousel(urlImagenes);
+    } else {
+        buildLightboxMedia(mediaSrc, tipoArchivo);
+    }
 
     const recinto = ubicacion?.recinto || '';
     const comuna = ubicacion?.comuna || '';
@@ -609,19 +761,30 @@ function navigateLightbox(direction) {
     }
 
     setTimeout(() => {
-        buildLightboxMedia(urlImagen, tipoArchivo);
-        const newMediaEl = lightboxMediaContainer.querySelector('img, video, iframe');
-        if (newMediaEl) {
-            newMediaEl.style.opacity = '0';
-            newMediaEl.style.transform = direction > 0 ? 'translateX(30px)' : 'translateX(-30px)';
-            newMediaEl.style.transition = 'none';
-            requestAnimationFrame(() => {
+        // Comprobar si el nuevo item tiene álbum
+        const itemUrlImagenesJSON = targetItem.dataset.urlImagenes;
+        let itemUrlImagenes = [];
+        if (itemUrlImagenesJSON) {
+            try { itemUrlImagenes = JSON.parse(itemUrlImagenesJSON); } catch(e) {}
+        }
+
+        if (itemUrlImagenes.length > 1 && tipoArchivo !== 'youtube') {
+            buildAlbumCarousel(itemUrlImagenes);
+        } else {
+            buildLightboxMedia(urlImagen, tipoArchivo);
+            const newMediaEl = lightboxMediaContainer.querySelector('img, video, iframe');
+            if (newMediaEl) {
+                newMediaEl.style.opacity = '0';
+                newMediaEl.style.transform = direction > 0 ? 'translateX(30px)' : 'translateX(-30px)';
+                newMediaEl.style.transition = 'none';
                 requestAnimationFrame(() => {
-                    newMediaEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                    newMediaEl.style.opacity = '1';
-                    newMediaEl.style.transform = 'translateX(0)';
+                    requestAnimationFrame(() => {
+                        newMediaEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        newMediaEl.style.opacity = '1';
+                        newMediaEl.style.transform = 'translateX(0)';
+                    });
                 });
-            });
+            }
         }
 
         let locationText = recinto || '';
@@ -643,6 +806,11 @@ function closeLightbox() {
     // Destruir iframe de YouTube para detener el audio completamente
     const oldIframe = lightboxMediaContainer.querySelector('iframe');
     if (oldIframe) oldIframe.remove();
+    // Limpiar album carousel si existe
+    const oldAlbumContainer = lightboxMediaContainer.querySelector('.album-container');
+    if (oldAlbumContainer) oldAlbumContainer.remove();
+    const oldDots = lightboxMediaContainer.querySelector('.album-dots-container');
+    if (oldDots) oldDots.remove();
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
 
@@ -652,6 +820,8 @@ function closeLightbox() {
 
     lightboxCurrentIndex = -1;
     lightboxVisibleItems = [];
+    albumImages = [];
+    albumCurrentIndex = 0;
 }
 
 if (lightbox) {

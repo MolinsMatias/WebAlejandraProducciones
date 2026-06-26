@@ -566,6 +566,25 @@ section {
     pointer-events: none;
 }
 
+/* Badge de álbum (múltiples fotos) */
+.bento-album-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 2;
+    pointer-events: none;
+}
+
 /* --- Catalog Search Bar --- */
 .catalog-search-container {
     display: flex;
@@ -992,6 +1011,101 @@ section {
     .lightbox-nav-next { right: 10px; }
 }
 
+/* --- Album Carousel inside Lightbox --- */
+.album-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    max-height: 75vh;
+}
+
+.album-image {
+    max-width: 100%;
+    max-height: 75vh;
+    border-radius: 15px;
+    box-shadow: 0 0 50px rgba(212, 175, 55, 0.15);
+    object-fit: contain;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.album-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20, 20, 20, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 2rem;
+    line-height: 1;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    user-select: none;
+}
+
+.album-nav:hover {
+    background: rgba(212, 175, 55, 0.25);
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.album-nav-prev { left: 10px; }
+.album-nav-next { right: 10px; }
+
+.album-dots-container {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 0 4px;
+}
+
+.album-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.album-dot.active {
+    background: var(--gold-primary);
+    border-color: var(--gold-primary);
+    transform: scale(1.2);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+.album-dot:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+@media (max-width: 868px) {
+    .album-nav {
+        display: none !important;
+    }
+    .album-dots-container {
+        gap: 6px;
+    }
+    .album-dot {
+        width: 8px;
+        height: 8px;
+    }
+}
+
 
 
 /* Contact Form */
@@ -1401,4 +1515,75 @@ footer {
         font-size: 0.8rem;
         padding: 8px 16px;
     }
+}
+
+/* --- Footer & HevStack Watermark --- */
+footer {
+    text-align: center;
+    padding: 40px 20px 20px;
+    border-top: 1px solid var(--glass-border);
+    background: linear-gradient(to top, rgba(5, 5, 5, 1), rgba(5, 5, 5, 0.85));
+}
+
+footer p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.footer-watermark {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.footer-watermark p {
+    font-size: 0.78rem;
+    color: rgba(161, 161, 170, 0.5);
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.hevstack-icon {
+    vertical-align: middle;
+    opacity: 0.6;
+    transition: all 0.3s ease;
+}
+
+.hevstack-link {
+    color: rgba(161, 161, 170, 0.7);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.hevstack-link:hover {
+    color: var(--gold-primary);
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+}
+
+.hevstack-link:hover .hevstack-icon {
+    opacity: 1;
+    stroke: var(--gold-primary);
+    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.4));
+}
+
+.hevstack-cta {
+    color: rgba(212, 175, 55, 0.45);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.hevstack-cta:hover {
+    color: var(--gold-hover);
+    text-decoration: underline;
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
 }
