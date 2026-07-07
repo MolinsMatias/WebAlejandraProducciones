@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alejandra Producciones | Arriendo Pistas LED & Eventos Premium en Chile</title>
+    <title>Alejandra Producciones | Arriendo Pistas de Baile Infinity para Matrimonios y Eventos</title>
     <meta name="description"
         content="Arriendo de pistas de baile LED infinity, pistas ajedrez, iluminación profesional y DJ para matrimonios y eventos corporativos en Santiago y todo Chile.">
     <meta name="keywords"
@@ -23,7 +23,7 @@
     <meta property="og:title" content="Alejandra Producciones | Eventos Premium en Chile">
     <meta property="og:description"
         content="Arriendo de pistas de baile LED infinity, pistas ajedrez, iluminación y DJ para matrimonios y eventos corporativos.">
-    <meta property="og:image" content="https://www.alejandraproducciones.cl/assets/og-image.jpg">
+    <meta property="og:image" content="https://www.alejandraproducciones.cl/assets/og-image.png">
     <meta property="og:locale" content="es_CL">
     <meta property="og:site_name" content="Alejandra Producciones">
 
@@ -32,7 +32,7 @@
     <meta name="twitter:title" content="Alejandra Producciones | Eventos Premium en Chile">
     <meta name="twitter:description"
         content="Arriendo de pistas de baile LED infinity, pistas ajedrez, iluminación y DJ para matrimonios y eventos corporativos.">
-    <meta name="twitter:image" content="https://www.alejandraproducciones.cl/assets/og-image.jpg">
+    <meta name="twitter:image" content="https://www.alejandraproducciones.cl/assets/og-image.png">
 
     <!-- Preload hero background for faster LCP -->
     <link rel="preload" as="image" href="assets/pista_bg.webp" type="image/webp">
@@ -54,7 +54,7 @@
         "email": "ale@alejandraproducciones.cl",
         "url": "https://www.alejandraproducciones.cl",
         "logo": "https://www.alejandraproducciones.cl/assets/logo.png",
-        "image": "https://www.alejandraproducciones.cl/assets/og-image.jpg",
+        "image": "https://www.alejandraproducciones.cl/assets/og-image.png",
         "address": {
             "@type": "PostalAddress",
             "addressLocality": "Santiago",
@@ -70,6 +70,26 @@
             "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
             "opens": "09:00",
             "closes": "21:00"
+        },
+        "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Servicios para Eventos y Matrimonios",
+            "itemListElement": [
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Arriendo Pista de Baile Infinity"
+                    }
+                },
+                {
+                    "@type": "Offer",
+                    "itemOffered": {
+                        "@type": "Service",
+                        "name": "Arriendo Pista Ajedrez para Bodas"
+                    }
+                }
+            ]
         }
     }
     </script>
@@ -130,11 +150,13 @@
         <!-- Sección de Inicio -->
         <section id="inicio" class="hero-section">
             <div class="hero-content">
-                <h1 class="hero-title" style="color: #fff;">Alejandra<br><span class="gold-accent">Producciones</span>
+                <h1 class="hero-title" style="color: #fff;">
+                    <span class="sr-only" style="display:none;">Arriendo de Pistas de Baile Infinity para Matrimonios y Eventos por </span>
+                    Alejandra<br><span class="gold-accent">Producciones</span>
                 </h1>
                 <p class="hero-subtitle">Expertos en arriendo de pistas de baile iluminadas y soluciones de iluminación
-                    para Matrimonios y Eventos Corporativos.</p>
-                <a href="#catalogo" class="btn-primary btn-large">Ver catálogo y videos</a>
+                    para matrimonios y eventos corporativos.</p>
+                <a href="#catalogo" class="btn-primary btn-large">Ver pistas de baile y videos</a>
             </div>
             <div class="hero-reels" id="hero-reels-container">
                 <!-- Se cargan dinámicamente desde Firebase o Mock -->
@@ -143,74 +165,78 @@
 
         <!-- Sección de Servicios -->
         <section id="servicios" class="servicios-section">
-            <h2 class="section-title">Nuestros <span class="gold-accent">Servicios</span></h2>
+            <h2 class="section-title">Servicios para <span class="gold-accent">matrimonios y eventos</span></h2>
             <div class="servicios-grid">
                 <!-- Servicio 1 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front"
-                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-infinity.webp');">
+                        <div class="servicio-front">
+                            <img src="assets/card-infinity.webp" alt="Arriendo de pista de baile infinity LED para matrimonios" class="servicio-bg-img">
+                            <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">✨</div>
-                            <h3>Pistas LED Infinity</h3>
+                            <h3>Pistas LED infinity</h3>
                         </div>
                         <div class="servicio-back">
-                            <h3>Pistas LED Infinity</h3>
+                            <h3>Pistas LED infinity</h3>
                             <p>Ilumina tu evento con nuestras pistas de baile LED de última generación. Brillantes,
                                 resistentes y operadas profesionalmente vía control DMX para crear efectos visuales
                                 fascinantes.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('Pistas LED')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Pistas LED')">Ver pistas infinity</button>
                         </div>
                     </div>
                 </div>
                 <!-- Servicio 2 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front"
-                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-ajedrez.webp');">
+                        <div class="servicio-front">
+                            <img src="assets/card-ajedrez.webp" alt="Arriendo de pista de ajedrez blanco y negro para bodas" class="servicio-bg-img">
+                            <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">♟️</div>
-                            <h3>Pistas de Ajedrez</h3>
+                            <h3>Pistas de ajedrez</h3>
                         </div>
                         <div class="servicio-back">
-                            <h3>Pistas de Ajedrez</h3>
+                            <h3>Pistas de ajedrez</h3>
                             <p>La elegancia clásica que tu matrimonio necesita. Suelos ajedrezados en blanco y negro de
                                 alto brillo y resistencia premium.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('Ajedrez')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Ajedrez')">Ver pistas ajedrez</button>
                         </div>
                     </div>
                 </div>
                 <!-- Servicio 3 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front"
-                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-iluminacion.webp');">
+                        <div class="servicio-front">
+                            <img src="assets/card-iluminacion.webp" alt="Iluminación profesional para eventos y matrimonios" class="servicio-bg-img">
+                            <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">💡</div>
-                            <h3>Iluminación Profesional</h3>
+                            <h3>Iluminación profesional</h3>
                         </div>
                         <div class="servicio-back">
-                            <h3>Iluminación Profesional</h3>
+                            <h3>Iluminación profesional</h3>
                             <p>Genera atmósferas envolventes con nuestras cabezas móviles, focos perimetrales y show
                                 láser inteligente.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('Videos')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Videos')">Ver iluminación</button>
                         </div>
                     </div>
                 </div>
                 <!-- Servicio 4 -->
                 <div class="servicio-card-container" ontouchstart="">
                     <div class="servicio-card">
-                        <div class="servicio-front"
-                            style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url('assets/card-dj.webp');">
+                        <div class="servicio-front">
+                            <img src="assets/card-dj.webp" alt="DJ y amplificación profesional para fiestas" class="servicio-bg-img">
+                            <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">🎧</div>
-                            <h3>DJ y Amplificación</h3>
+                            <h3>DJ y amplificación</h3>
                         </div>
                         <div class="servicio-back">
-                            <h3>DJ y Amplificación</h3>
+                            <h3>DJ y amplificación</h3>
                             <p>Equipamiento de sonido profesional inmersivo y DJs experimentados listos para hacer
                                 vibrar la pista hasta el amanecer.</p>
                             <button class="btn-primary" style="margin-top: 15px; padding: 8px 20px; font-size: 0.85rem;"
-                                onclick="abrirCatalogoEn('Videos')">Ver Ejemplos</button>
+                                onclick="abrirCatalogoEn('Videos')">Ver DJ y sonido</button>
                         </div>
                     </div>
                 </div>
@@ -237,7 +263,7 @@
 
         <!-- Sección Catálogo -->
         <section id="catalogo" class="catalogo-section">
-            <h2 class="section-title">Catálogo <span class="gold-accent">Premium</span></h2>
+            <h2 class="section-title">Catálogo de <span class="gold-accent">pistas de baile</span></h2>
 
             <!-- PDF Download -->
             <div class="catalog-header-actions" id="pdf-download-container" style="display: none;">
@@ -246,7 +272,7 @@
                         <path
                             d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6zm5-6.5v3.09l-1.29-1.3-1.42 1.42L12 20.41l3.71-3.7-1.42-1.42L13 16.59V13.5h-2z" />
                     </svg>
-                    Descargar Catálogo PDF
+                    Descargar catálogo PDF
                 </a>
             </div>
 
