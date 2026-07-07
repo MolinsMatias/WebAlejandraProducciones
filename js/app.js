@@ -1,5 +1,6 @@
 import { db } from './firebase-config.js';
 import { collection, getDocs, getDoc, doc, orderBy, query, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { SocialCards } from './social-cards.js';
 
 // Elementos del DOM
 const bentoGrid = document.getElementById('bento-grid');
@@ -25,6 +26,7 @@ let albumCurrentIndex = 0;
 
 let catalogCategories = [];
 let allGridIds = [];
+let socialCardsInstance = null;
 
 function getSlug(text) {
     return text.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -100,7 +102,7 @@ function renderCatalogTabs() {
         const grid = document.createElement('div');
         grid.id = targetId;
         grid.className = `bento-grid tab-content ${index === 0 ? 'active-content' : ''}`;
-        
+
         // Cargar 6 skeletons por defecto
         grid.innerHTML = `
             <div class="bento-item skeleton"></div>
@@ -176,22 +178,22 @@ function reRenderAllEventos() {
         return;
     }
 
-    let reelsCargados = 0;
-
-    // Limpiar hero reels por si es una actualización
-    if (heroReelsContainer) heroReelsContainer.innerHTML = '';
-
     allEventosData.forEach((data) => {
         renderBentoItem(data);
-
-        // Poblar los 2 primeros reels si son formato video
-        if (data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov') || data.urlImagen.includes('.webm') || data.tipoArchivo === 'video')) {
-            if (reelsCargados < 2) {
-                renderHeroReel(data);
-                reelsCargados++;
-            }
-        }
     });
+
+    // Iniciar o actualizar SocialCards
+    const isMobile = window.innerWidth < 768;
+    const maxEventos = isMobile ? 5 : 7;
+    if (!socialCardsInstance) {
+        socialCardsInstance = new SocialCards('#fan-layout', '#fan-pagination', allEventosData.slice(0, maxEventos));
+    } else {
+        socialCardsInstance.cardsData = allEventosData.slice(0, maxEventos);
+        socialCardsInstance.totalCards = socialCardsInstance.cardsData.length;
+        socialCardsInstance.needsPagination = socialCardsInstance.totalCards > socialCardsInstance.MAX_VISIBLE;
+        socialCardsInstance.centerIndex = socialCardsInstance.needsPagination ? socialCardsInstance.HALF : (socialCardsInstance.totalCards >> 1);
+        socialCardsInstance.init();
+    }
 
     // Poblar los filtros dinámicos del tab activo
     poblarFiltrosDelTab();
@@ -262,6 +264,26 @@ function renderBentoItem(data) {
         </div>
     `;
 
+    // Lógica de Skeleton Loader
+    item.classList.add('media-loading');
+    const mediaEl = item.querySelector('img, video');
+    if (mediaEl) {
+        const handleLoad = () => {
+            item.classList.remove('media-loading');
+            item.classList.add('media-ready');
+        };
+
+        if (mediaEl.tagName === 'VIDEO') {
+            if (mediaEl.readyState >= 3) handleLoad();
+            else mediaEl.addEventListener('loadeddata', handleLoad);
+        } else {
+            if (mediaEl.complete) handleLoad();
+            else mediaEl.addEventListener('load', handleLoad);
+            // Fallback en caso de error
+            mediaEl.addEventListener('error', handleLoad);
+        }
+    }
+
     let targetId = allGridIds.length > 0 ? allGridIds[0] : '';
 
     const isVideo = data.tipoArchivo === 'video' || data.tipoArchivo === 'youtube' || (data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov') || data.urlImagen.includes('.webm')));
@@ -286,11 +308,7 @@ function renderBentoItem(data) {
 }
 
 function renderHeroReel(data) {
-    const isVideo = data.urlImagen && (data.urlImagen.includes('.mp4') || data.urlImagen.includes('.mov') || data.urlImagen.includes('video'));
-    if (!isVideo) return;
-
-    const mediaHTML = `<video src="${data.urlImagen}" autoplay loop muted playsinline loading="lazy"></video>`;
-    heroReelsContainer.innerHTML += mediaHTML;
+    // Deprecated: Ahora usamos SocialCards
 }
 
 // --- Filtros dinámicos (Dropdowns) ---
@@ -716,7 +734,7 @@ function openLightbox(mediaSrc, ubicacion, tipoArchivo, metrosCuadrados, urlImag
     lightbox.classList.add('active');
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
-    
+
     // Ocultar widget de WhatsApp al abrir lightbox
     const waWidget = document.querySelector('.wa-widget-container');
     if (waWidget) waWidget.style.display = 'none';
@@ -765,7 +783,7 @@ function navigateLightbox(direction) {
         const itemUrlImagenesJSON = targetItem.dataset.urlImagenes;
         let itemUrlImagenes = [];
         if (itemUrlImagenesJSON) {
-            try { itemUrlImagenes = JSON.parse(itemUrlImagenesJSON); } catch(e) {}
+            try { itemUrlImagenes = JSON.parse(itemUrlImagenesJSON); } catch (e) { }
         }
 
         if (itemUrlImagenes.length > 1 && tipoArchivo !== 'youtube') {

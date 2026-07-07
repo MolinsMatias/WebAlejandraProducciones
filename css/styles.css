@@ -467,9 +467,12 @@ section {
 
 .hero-reels {
     display: flex;
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
     flex: 1;
-    justify-content: flex-end;
+    margin-left: -5vw;
     animation: fadeInRight 1s ease-out;
 }
 
@@ -780,12 +783,13 @@ section {
 }
 
 /* --- Skeleton Loading --- */
-.bento-item.skeleton {
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.04) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.2s infinite linear;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    pointer-events: none;
+.skeleton {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.04) 75%) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-loading 1.2s infinite linear !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    pointer-events: none !important;
+    color: transparent !important;
 }
 
 @keyframes skeleton-loading {
@@ -1453,6 +1457,8 @@ footer {
     .hero-reels {
         justify-content: center;
         flex-wrap: wrap;
+        margin-left: 0;
+        margin-top: 2rem;
     }
 
     .hero-title {
@@ -1606,4 +1612,182 @@ footer p {
     color: var(--gold-hover);
     text-decoration: underline;
     text-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+}
+
+/* --- Fan Layout CSS (SocialCards) --- */
+.fan-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    z-index: 30;
+    position: relative;
+}
+
+.fan-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 90rem;
+    height: 350px;
+    position: relative;
+    z-index: 20;
+}
+@media (min-width: 640px) { .fan-container { height: 420px; } }
+@media (min-width: 768px) { .fan-container { height: 450px; } }
+@media (min-width: 1024px) { .fan-container { height: 550px; } }
+
+.fan-layout {
+    display: flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 80rem;
+    height: 100%;
+}
+
+/* Native CSS Scroll Carousel for Mobile */
+.mobile-carousel-active {
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 30px 20px 40px 20px;
+    gap: 15px;
+    width: 100vw;
+    margin-left: -20px; /* Offset the 20px mobile padding */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+}
+.mobile-carousel-active::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+.mobile-carousel-active .fan-card {
+    position: relative !important;
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    width: 170px !important;
+    height: 270px !important;
+    transform: none !important;
+    margin: 0 !important;
+}
+
+.fan-card {
+    position: absolute;
+    display: block;
+    cursor: pointer;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 120px;
+    height: 190px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #111;
+    transform-origin: bottom center;
+}
+@media (min-width: 640px) { .fan-card { width: 140px; height: 220px; } }
+@media (min-width: 768px) { .fan-card { width: 160px; height: 250px; } }
+@media (min-width: 1024px) { .fan-card { width: 220px; height: 340px; } }
+
+.fan-card img, .fan-card video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 10;
+}
+
+.fan-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    z-index: 30;
+}
+
+.fan-arrow-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    color: rgba(255, 255, 255, 0.55);
+    cursor: pointer;
+    flex-shrink: 0;
+    z-index: 30;
+    outline: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    width: 2.5rem;
+    height: 2.5rem;
+    transition: all 0.3s ease;
+}
+@media (min-width: 768px) { .fan-arrow-btn { width: 3rem; height: 3rem; } }
+
+.fan-arrow-btn:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.8);
+}
+.fan-arrow-btn:active {
+    opacity: 0.7;
+}
+
+.fan-arrow-btn svg {
+    width: 1rem;
+    height: 1rem;
+    position: relative;
+    z-index: 2;
+}
+@media (min-width: 768px) { .fan-arrow-btn svg { width: 1.25rem; height: 1.25rem; } }
+
+.fan-dots-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fan-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s;
+    background: rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+.fan-dot.active {
+    background: rgba(255, 255, 255, 0.8);
+    transform: scale(1.3);
+}
+
+/* --- Media Skeleton Loaders --- */
+.media-loading {
+    background: linear-gradient(90deg, #1f1f23 25%, #2a2a30 50%, #1f1f23 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+.media-loading img,
+.media-loading video {
+    opacity: 0 !important;
+}
+
+.media-ready img,
+.media-ready video {
+    opacity: 1 !important;
+    transition: opacity 0.4s ease-out;
 }
