@@ -54,15 +54,20 @@ export class SocialCards {
         // Firebase Storage → reemplazar extensión por _400x400.webp
         // URL formato puede ser firebasestorage.googleapis.com o [bucket].firebasestorage.app
         if (url.includes('firebasestorage.googleapis.com') || url.includes('storage.googleapis.com') || url.includes('firebasestorage.app')) {
+            // Eliminar el token porque el token pertenece al archivo original y Firebase
+            // puede rechazarlo con 403 Forbidden si no coincide con el token del thumbnail.
+            // Si el bucket es público (lo cual es para poder leer en la web), alt=media basta.
+            let urlWithoutToken = url.split('&token=')[0];
+            
             // Reemplazar la extensión en el path URL-encoded: file.jpg → file_400x400.webp
             // El path está entre /o/ y ?alt=media
-            const thumbUrl = url.replace(
+            const thumbUrl = urlWithoutToken.replace(
                 /(%2F|\/)([^%2F/?]+)\.(jpg|jpeg|png|webp|gif)(?=\?)/i,
                 '$1$2_400x400.webp?'
             ).replace('??', '?');
 
             // Si la URL cambió, retornar la versión thumbnail
-            if (thumbUrl !== url) return thumbUrl;
+            if (thumbUrl !== urlWithoutToken) return thumbUrl;
         }
 
         return url;
