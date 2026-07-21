@@ -58,13 +58,13 @@ export class SocialCards {
             // puede rechazarlo con 403 Forbidden si no coincide con el token del thumbnail.
             // Si el bucket es público (lo cual es para poder leer en la web), alt=media basta.
             let urlWithoutToken = url.split('&token=')[0];
-            
-            // Reemplazar la extensión en el path URL-encoded: file.jpg → file_400x400.webp
-            // El path está entre /o/ y ?alt=media
+
+            // Reemplazar la extensión al final de la ruta: file.webp → file_400x400.webp
+            // Buscamos el . seguido de la extensión, que debe estar justo antes del ?
             const thumbUrl = urlWithoutToken.replace(
-                /(%2F|\/)([^%2F/?]+)\.(jpg|jpeg|png|webp|gif)(?=\?)/i,
-                '$1$2_400x400.webp?'
-            ).replace('??', '?');
+                /\.(jpg|jpeg|png|webp|gif)(?=\?)/i,
+                '_400x400.webp'
+            );
 
             // Si la URL cambió, retornar la versión thumbnail
             if (thumbUrl !== urlWithoutToken) return thumbUrl;
@@ -498,26 +498,26 @@ export class SocialCards {
 
     startMobileAutoPlay() {
         this.stopMobileAutoPlay();
-        
+
         // Desactivar comportamientos CSS nativos conflictivos para dejar que GSAP controle
         this.container.style.scrollSnapType = 'none';
         this.container.style.scrollBehavior = 'auto';
-        
+
         this.mobileInterval = setInterval(() => {
             if (!this.container.classList.contains('mobile-carousel-active')) return;
-            
+
             const firstCard = this.container.firstElementChild;
             if (!firstCard) return;
-            
+
             const cardWidth = firstCard.offsetWidth + 15; // width + gap
             const maxScroll = this.container.scrollWidth - this.container.clientWidth;
-            
+
             if (this.container.scrollLeft >= maxScroll - 20) {
                 // Modo loop infinito: mover la primera al final sin animacion
                 this.container.appendChild(firstCard);
                 this.container.scrollLeft -= cardWidth;
             }
-            
+
             // GSAP tween customizado para una transición perfectamente suave
             const proxy = { x: this.container.scrollLeft };
             gsap.to(proxy, {
