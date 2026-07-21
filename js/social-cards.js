@@ -93,8 +93,11 @@ export class SocialCards {
                 el.target = card.linkUrl.startsWith('http') ? '_blank' : '_self';
             }
 
-            // Usar thumbnail si está disponible en los datos, sino usar la URL original
-            const thumbUrl = card.urlThumbnail || this.getThumbnailUrl(card.urlImagen, card.tipoArchivo);
+            // Si urlThumbnail existe y es diferente a la original, usarla. Si no, forzar la generación de _400x400
+            let thumbUrl = card.urlThumbnail;
+            if (!thumbUrl || thumbUrl === card.urlImagen) {
+                thumbUrl = this.getThumbnailUrl(card.urlImagen, card.tipoArchivo);
+            }
 
             let mediaEl;
             if (isVideo) {
