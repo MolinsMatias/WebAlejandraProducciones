@@ -35,7 +35,7 @@
     <meta name="twitter:image" content="https://www.alejandraproducciones.cl/assets/og-image.png">
 
     <!-- Preload hero background for faster LCP -->
-    <link rel="preload" as="image" href="assets/pista_bg.webp" type="image/webp">
+    <link rel="preload" as="image" href="assets/pista_bg.webp" type="image/webp" fetchpriority="high">
 
     <!-- Google Fonts: Inter + Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -108,8 +108,7 @@
     <header class="navbar">
         <div class="nav-container">
             <a href="#" class="logo">
-                <!-- Por favor reemplaza 'logo.png' por el archivo real de tu logo en la carpeta assets -->
-                <img src="assets/logo.svg" alt="Alejandra Producciones - Eventos Premium" class="logo-img"
+                <img src="assets/logo.webp" alt="Alejandra Producciones - Eventos Premium" class="logo-img"
                     style="height: 50px; width: 50px; object-fit: contain;">
             </a>
 
@@ -223,7 +222,8 @@
                     <div class="servicio-card">
                         <div class="servicio-front">
                             <img src="assets/card-infinity.webp"
-                                alt="Arriendo de pista de baile infinity LED para matrimonios" class="servicio-bg-img">
+                                alt="Arriendo de pista de baile infinity LED para matrimonios" class="servicio-bg-img"
+                                loading="lazy" decoding="async">
                             <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">✨</div>
                             <h3>Pistas LED infinity</h3>
@@ -243,7 +243,8 @@
                     <div class="servicio-card">
                         <div class="servicio-front">
                             <img src="assets/card-ajedrez.webp"
-                                alt="Arriendo de pista de ajedrez blanco y negro para bodas" class="servicio-bg-img">
+                                alt="Arriendo de pista de ajedrez blanco y negro para bodas" class="servicio-bg-img"
+                                loading="lazy" decoding="async">
                             <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">♟️</div>
                             <h3>Pistas de ajedrez</h3>
@@ -262,7 +263,8 @@
                     <div class="servicio-card">
                         <div class="servicio-front">
                             <img src="assets/card-iluminacion.webp"
-                                alt="Iluminación profesional para eventos y matrimonios" class="servicio-bg-img">
+                                alt="Iluminación profesional para eventos y matrimonios" class="servicio-bg-img"
+                                loading="lazy" decoding="async">
                             <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">💡</div>
                             <h3>Iluminación profesional</h3>
@@ -281,7 +283,7 @@
                     <div class="servicio-card">
                         <div class="servicio-front">
                             <img src="assets/card-dj.webp" alt="DJ y amplificación profesional para fiestas"
-                                class="servicio-bg-img">
+                                class="servicio-bg-img" loading="lazy" decoding="async">
                             <div class="servicio-gradient"></div>
                             <div class="servicio-icon" aria-hidden="true">🎧</div>
                             <h3>DJ y amplificación</h3>

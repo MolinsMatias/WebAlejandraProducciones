@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+serviceAccountKey.json
+backfill.js
+compress.js
+npm-debug.log
+.firebase/

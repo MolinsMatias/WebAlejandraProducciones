@@ -35,11 +35,50 @@ export class SocialCards {
         this.init();
     }
 
+    /**
+     * Genera una URL de thumbnail optimizada para el abanico.
+     * - Firebase Storage: construye la URL del thumbnail generado por la extensión Resize Images
+     *   (sufijo _400x400.webp en el mismo path).
+     * - YouTube: usa thumbnail mqdefault (320×180).
+     * - Otras URLs: retorna la original.
+     */
+    getThumbnailUrl(url, tipoArchivo) {
+        if (!url) return url;
+
+        // YouTube → usar thumbnail mqdefault (320×180)
+        if (tipoArchivo === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
+            const match = url.match(/(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*)/);
+            if (match && match[1]) return `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`;
+        }
+
+        // Firebase Storage → reemplazar extensión por _400x400.webp
+        // URL formato puede ser firebasestorage.googleapis.com o [bucket].firebasestorage.app
+        if (url.includes('firebasestorage.googleapis.com') || url.includes('storage.googleapis.com') || url.includes('firebasestorage.app')) {
+            // Reemplazar la extensión en el path URL-encoded: file.jpg → file_400x400.webp
+            // El path está entre /o/ y ?alt=media
+            const thumbUrl = url.replace(
+                /(%2F|\/)([^%2F/?]+)\.(jpg|jpeg|png|webp|gif)(?=\?)/i,
+                '$1$2_400x400.webp?'
+            ).replace('??', '?');
+
+            // Si la URL cambió, retornar la versión thumbnail
+            if (thumbUrl !== url) return thumbUrl;
+        }
+
+        return url;
+    }
+
     init() {
         if (!this.container || this.totalCards === 0) return;
 
-        // Build DOM
+        // Build DOM — reset arrays for re-init
         this.container.innerHTML = '';
+        this.cardElements = [];
+        this.dots = [];
+        this.prevVisible = new Set();
+        const isMobile = window.innerWidth < 768;
+        const centerIdx = this.needsPagination ? this.HALF : (this.totalCards >> 1);
+
         this.cardsData.forEach((card, index) => {
             const isVideo = card.urlImagen && (card.urlImagen.includes('.mp4') || card.urlImagen.includes('.mov') || card.urlImagen.includes('video') || card.tipoArchivo === 'video');
             const el = document.createElement(card.linkUrl ? 'a' : 'div');
@@ -49,34 +88,41 @@ export class SocialCards {
                 el.target = card.linkUrl.startsWith('http') ? '_blank' : '_self';
             }
 
+            // Usar thumbnail si está disponible en los datos, sino usar la URL original
+            const thumbUrl = card.urlThumbnail || this.getThumbnailUrl(card.urlImagen, card.tipoArchivo);
+
             let mediaEl;
             if (isVideo) {
-                el.innerHTML = `<video src="${card.urlImagen}" autoplay loop muted playsinline loading="lazy"></video>`;
+                // Videos: NO autoplay ni preload hasta que sea visible — ahorra ancho de banda masivamente
+                el.innerHTML = `<video preload="none" loop muted playsinline></video>`;
                 mediaEl = el.querySelector('video');
             } else {
-                el.innerHTML = `<img src="${card.urlImagen}" loading="lazy" alt="${card.alt || `Card ${index}`}">`;
+                // Imágenes: La tarjeta central es prioridad máxima (LCP)
+                const isCenter = index === centerIdx;
+                if (isCenter) {
+                    el.innerHTML = `<img fetchpriority="high" alt="${card.alt || `Evento ${index + 1} - Alejandra Producciones`}">`;
+                } else {
+                    el.innerHTML = `<img decoding="async" alt="${card.alt || `Evento ${index + 1} - Alejandra Producciones`}">`;
+                }
                 mediaEl = el.querySelector('img');
             }
 
-            // Lógica de carga del esqueleto
-            if (mediaEl) {
-                const handleLoad = () => {
-                    el.classList.remove('media-loading');
-                    el.classList.add('media-ready');
-                };
-                if (mediaEl.tagName === 'VIDEO') {
-                    if (mediaEl.readyState >= 3) handleLoad();
-                    else mediaEl.addEventListener('loadeddata', handleLoad);
-                } else {
-                    if (mediaEl.complete) handleLoad();
-                    else mediaEl.addEventListener('load', handleLoad);
-                    mediaEl.addEventListener('error', handleLoad);
-                }
-            }
+            // Guardar datos para carga diferida
+            el._mediaData = {
+                isVideo,
+                fullUrl: card.urlImagen,
+                thumbUrl: thumbUrl,
+                mediaEl,
+                index,
+                loaded: false
+            };
 
             this.container.appendChild(el);
             this.cardElements.push(el);
         });
+
+        // Carga escalonada: centro primero, luego hacia afuera
+        this._loadCardsProgressively(centerIdx, isMobile);
 
         // Setup Pagination DOM
         if (this.needsPagination && this.pagination) {
@@ -112,6 +158,90 @@ export class SocialCards {
 
         // Trigger enter immediately to prevent flicker
         this.updateCards();
+    }
+
+    /**
+     * Carga las imágenes/videos de forma escalonada desde el centro hacia los bordes.
+     * La card central se carga primero (prioridad alta), luego las adyacentes
+     * con un delay incremental de 150ms por posición.
+     */
+    _loadCardsProgressively(centerIdx, isMobile) {
+        // En móvil, cargar las primeras 3 visibles inmediatamente, el resto con delay
+        if (isMobile) {
+            this.cardElements.forEach((el, i) => {
+                const delay = i < 3 ? 0 : (i - 2) * 200;
+                setTimeout(() => this._loadSingleCard(el), delay);
+            });
+            return;
+        }
+
+        // Desktop: cargar desde el centro hacia afuera
+        // Orden: centro (0ms) → ±1 (150ms) → ±2 (300ms) → ±3 (450ms)
+        const loadOrder = [];
+        loadOrder.push({ el: this.cardElements[centerIdx], delay: 0 });
+
+        for (let offset = 1; offset <= this.HALF; offset++) {
+            const delayMs = offset * 150;
+            if (centerIdx - offset >= 0) {
+                loadOrder.push({ el: this.cardElements[centerIdx - offset], delay: delayMs });
+            }
+            if (centerIdx + offset < this.totalCards) {
+                loadOrder.push({ el: this.cardElements[centerIdx + offset], delay: delayMs });
+            }
+        }
+
+        loadOrder.forEach(({ el, delay }) => {
+            if (!el) return;
+            if (delay === 0) {
+                this._loadSingleCard(el);
+            } else {
+                setTimeout(() => this._loadSingleCard(el), delay);
+            }
+        });
+    }
+
+    /**
+     * Carga una sola card: asigna el src a la imagen/video y maneja el skeleton.
+     * Si el thumbnail falla (imagen antigua sin thumbnail), hace fallback a la URL original.
+     */
+    _loadSingleCard(el) {
+        const data = el._mediaData;
+        if (!data || data.loaded) return;
+        data.loaded = true;
+
+        const { isVideo, fullUrl, thumbUrl, mediaEl } = data;
+        const usesThumb = thumbUrl && thumbUrl !== fullUrl;
+
+        const handleLoad = () => {
+            el.classList.remove('media-loading');
+            el.classList.add('media-ready');
+        };
+
+        if (isVideo) {
+            mediaEl.src = fullUrl;
+            mediaEl.autoplay = true;
+            if (mediaEl.readyState >= 3) handleLoad();
+            else mediaEl.addEventListener('loadeddata', handleLoad, { once: true });
+        } else {
+            // Si usamos thumbnail, agregar fallback al original en caso de error
+            if (usesThumb) {
+                mediaEl.addEventListener('error', () => {
+                    // Thumbnail no existe (imagen antigua) → cargar original
+                    mediaEl.src = fullUrl;
+                    mediaEl.addEventListener('load', handleLoad, { once: true });
+                    mediaEl.addEventListener('error', handleLoad, { once: true });
+                }, { once: true });
+                mediaEl.addEventListener('load', handleLoad, { once: true });
+                mediaEl.src = thumbUrl;
+            } else {
+                mediaEl.src = fullUrl;
+                if (mediaEl.complete && mediaEl.naturalWidth > 0) handleLoad();
+                else {
+                    mediaEl.addEventListener('load', handleLoad, { once: true });
+                    mediaEl.addEventListener('error', handleLoad, { once: true });
+                }
+            }
+        }
     }
 
     getResponsiveMultiplier(width) {
